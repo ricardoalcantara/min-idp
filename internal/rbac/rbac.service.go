@@ -1,15 +1,22 @@
 package rbac
 
-import (
-	rbac_entities "github.com/ricardoalcantara/min-idp/internal/rbac/entities"
-	rbac_repositories "github.com/ricardoalcantara/min-idp/internal/rbac/repositories"
-)
+import rbac_entities "github.com/ricardoalcantara/min-idp/internal/rbac/entities"
 
-type RBACService struct {
-	repo *rbac_repositories.RBACRepository
+type RBACRepository interface {
+	CreateRole(role *rbac_entities.Role) error
+	FindRoleByName(name string) (*rbac_entities.Role, error)
+	FindRoleByID(id uint) (*rbac_entities.Role, error)
+	CreatePermission(perm *rbac_entities.Permission) error
+	AssignPermissionToRole(roleID, permID uint) error
+	AssignRoleToUser(userID, roleID uint) error
+	UserHasPermission(userID uint, permission string) (bool, error)
 }
 
-func NewRBACService(repo *rbac_repositories.RBACRepository) *RBACService {
+type RBACService struct {
+	repo RBACRepository
+}
+
+func NewRBACService(repo RBACRepository) *RBACService {
 	return &RBACService{repo: repo}
 }
 

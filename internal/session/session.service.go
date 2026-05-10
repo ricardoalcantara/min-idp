@@ -7,15 +7,24 @@ import (
 
 	"github.com/ricardoalcantara/min-idp/internal/config"
 	session_entities "github.com/ricardoalcantara/min-idp/internal/session/entities"
-	session_repositories "github.com/ricardoalcantara/min-idp/internal/session/repositories"
 )
 
+type SessionRepository interface {
+	Create(s *session_entities.Session) error
+	FindByUUID(uuid string) (*session_entities.Session, error)
+	FindActiveByUserID(userID uint) ([]session_entities.Session, error)
+	Touch(ctx context.Context, id uint) error
+	Revoke(ctx context.Context, id uint) error
+	RevokeAll(ctx context.Context, userID uint) error
+	RevokeAllExcept(ctx context.Context, userID, exceptID uint) error
+}
+
 type SessionService struct {
-	repo *session_repositories.SessionRepository
+	repo SessionRepository
 	cfg  *config.Config
 }
 
-func NewSessionService(repo *session_repositories.SessionRepository, cfg *config.Config) *SessionService {
+func NewSessionService(repo SessionRepository, cfg *config.Config) *SessionService {
 	return &SessionService{repo: repo, cfg: cfg}
 }
 

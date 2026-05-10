@@ -1,15 +1,22 @@
 package sp
 
 import (
+	"github.com/go-minstack/repository"
 	sp_entities "github.com/ricardoalcantara/min-idp/internal/sp/entities"
-	sp_repositories "github.com/ricardoalcantara/min-idp/internal/sp/repositories"
 )
 
-type SPService struct {
-	repo *sp_repositories.SPRepository
+type SPRepository interface {
+	Create(sp *sp_entities.ServiceProvider) error
+	FindByUUID(uuid string) (*sp_entities.ServiceProvider, error)
+	FindBySlug(slug string) (*sp_entities.ServiceProvider, error)
+	FindAll(opts ...repository.QueryOption) ([]sp_entities.ServiceProvider, error)
 }
 
-func NewSPService(repo *sp_repositories.SPRepository) *SPService {
+type SPService struct {
+	repo SPRepository
+}
+
+func NewSPService(repo SPRepository) *SPService {
 	return &SPService{repo: repo}
 }
 

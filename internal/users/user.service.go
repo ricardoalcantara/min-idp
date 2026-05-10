@@ -6,18 +6,25 @@ import (
 	"github.com/ricardoalcantara/min-idp/internal/crypto"
 	"github.com/ricardoalcantara/min-idp/internal/db"
 	user_entities "github.com/ricardoalcantara/min-idp/internal/users/entities"
-	user_repositories "github.com/ricardoalcantara/min-idp/internal/users/repositories"
 )
 
 var errInvalidCredentials = errors.New("invalid credentials")
 var errAccountNotActive = errors.New("account is not active")
 
-type UserService struct {
-	users *user_repositories.UserRepository
+type UserRepository interface {
+	Create(u *user_entities.User) error
+	FindByID(id uint) (*user_entities.User, error)
+	FindByUUID(uuid string) (*user_entities.User, error)
+	FindByEmail(email string) (*user_entities.User, error)
+	Update(u *user_entities.User) error
 }
 
-func NewUserService(users *user_repositories.UserRepository) *UserService {
-	return &UserService{users: users}
+type UserService struct {
+	repo UserRepository
+}
+
+func NewUserService(repo UserRepository) *UserService {
+	return &UserService{repo: repo}
 }
 
 func (s *UserService) Create(email, password string) (*user_entities.User, error) {
@@ -30,26 +37,26 @@ func (s *UserService) Create(email, password string) (*user_entities.User, error
 		PasswordHash: hash,
 		Status:       "active",
 	}
-	if err := s.users.Create(u); err != nil {
+	if err := s.repo.Create(u); err != nil {
 		return nil, err
 	}
 	return u, nil
 }
 
 func (s *UserService) FindByID(id uint) (*user_entities.User, error) {
-	return s.users.FindByID(id)
+	return s.repo.FindByID(id)
 }
 
 func (s *UserService) FindByUUID(id string) (*user_entities.User, error) {
-	return s.users.FindByUUID(id)
+	return s.repo.FindByUUID(id)
 }
 
 func (s *UserService) FindByEmail(email string) (*user_entities.User, error) {
-	return s.users.FindByEmail(email)
+	return s.repo.FindByEmail(email)
 }
 
 func (s *UserService) Authenticate(email, password string) (*user_entities.User, error) {
-	u, err := s.users.FindByEmail(email)
+	u, err := s.repo.FindByEmail(email)
 	if err != nil {
 		if err == db.ErrEntityNotFound {
 			return nil, errInvalidCredentials
@@ -70,10 +77,10 @@ func (s *UserService) UpdatePassword(userID uint, newPassword string) error {
 	if err != nil {
 		return err
 	}
-	u, err := s.users.FindByID(userID)
+	u, err := s.repo.FindByID(userID)
 	if err != nil {
 		return err
 	}
 	u.PasswordHash = hash
-	return s.users.Update(u)
+	return s.repo.Update(u)
 }

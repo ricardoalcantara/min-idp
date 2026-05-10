@@ -5,15 +5,18 @@ import (
 	"time"
 
 	audit_entities "github.com/ricardoalcantara/min-idp/internal/audit/entities"
-	audit_repositories "github.com/ricardoalcantara/min-idp/internal/audit/repositories"
 )
 
+type AuditRepository interface {
+	Insert(e *audit_entities.Event) error
+}
+
 type AuditService struct {
-	repo *audit_repositories.AuditRepository
+	repo AuditRepository
 	log  *slog.Logger
 }
 
-func NewAuditService(repo *audit_repositories.AuditRepository, log *slog.Logger) *AuditService {
+func NewAuditService(repo AuditRepository, log *slog.Logger) *AuditService {
 	return &AuditService{repo: repo, log: log}
 }
 

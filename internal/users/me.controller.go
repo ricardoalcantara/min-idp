@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-minstack/web"
+	session_dto "github.com/ricardoalcantara/min-idp/internal/session/dto"
 	user_dto "github.com/ricardoalcantara/min-idp/internal/users/dto"
 	"github.com/ricardoalcantara/min-idp/internal/session"
 )
@@ -39,7 +40,11 @@ func (c *MeController) sessions(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
 		return
 	}
-	ctx.JSON(http.StatusOK, sessions)
+	dtos := make([]session_dto.SessionDto, len(sessions))
+	for i := range sessions {
+		dtos[i] = session_dto.NewSessionDto(&sessions[i])
+	}
+	ctx.JSON(http.StatusOK, dtos)
 }
 
 func (c *MeController) revokeAllSessions(ctx *gin.Context) {

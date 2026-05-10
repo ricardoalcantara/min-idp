@@ -18,11 +18,18 @@ type mockUserRepo struct {
 	err  error
 }
 
-func (m *mockUserRepo) Create(u *user_entities.User) error              { return m.err }
-func (m *mockUserRepo) FindByID(_ uint) (*user_entities.User, error)    { return m.user, m.err }
-func (m *mockUserRepo) FindByUUID(_ string) (*user_entities.User, error) { return m.user, m.err }
+func (m *mockUserRepo) Create(u *user_entities.User) error               { return m.err }
+func (m *mockUserRepo) FindByID(_ uint) (*user_entities.User, error)     { return m.user, m.err }
+func (m *mockUserRepo) FindByUUID(_ string) (*user_entities.User, error)  { return m.user, m.err }
 func (m *mockUserRepo) FindByEmail(_ string) (*user_entities.User, error) { return m.user, m.err }
-func (m *mockUserRepo) Update(_ *user_entities.User) error              { return m.err }
+func (m *mockUserRepo) Update(_ *user_entities.User) error               { return m.err }
+func (m *mockUserRepo) List(_, _ int) ([]*user_entities.User, int64, error) {
+	if m.user != nil {
+		return []*user_entities.User{m.user}, 1, m.err
+	}
+	return nil, 0, m.err
+}
+func (m *mockUserRepo) Delete(_ uint) error { return m.err }
 
 func newTestUserSvc(repo UserRepository) *UserService {
 	return NewUserService(repo)

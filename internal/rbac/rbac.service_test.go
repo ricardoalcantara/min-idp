@@ -18,13 +18,22 @@ type mockRBACRepo struct {
 	err        error
 }
 
-func (m *mockRBACRepo) CreateRole(role *rbac_entities.Role) error          { return m.err }
-func (m *mockRBACRepo) FindRoleByName(_ string) (*rbac_entities.Role, error) { return m.role, m.err }
-func (m *mockRBACRepo) FindRoleByID(_ uint) (*rbac_entities.Role, error)   { return m.role, m.err }
-func (m *mockRBACRepo) CreatePermission(p *rbac_entities.Permission) error { return m.err }
-func (m *mockRBACRepo) AssignPermissionToRole(_, _ uint) error             { return m.err }
-func (m *mockRBACRepo) AssignRoleToUser(_, _ uint) error                   { return m.err }
-func (m *mockRBACRepo) UserHasPermission(_ uint, _ string) (bool, error)   { return m.hasPerm, m.err }
+func (m *mockRBACRepo) CreateRole(role *rbac_entities.Role) error                     { return m.err }
+func (m *mockRBACRepo) FindRoleByName(_ string) (*rbac_entities.Role, error)            { return m.role, m.err }
+func (m *mockRBACRepo) FindRoleByID(_ uint) (*rbac_entities.Role, error)               { return m.role, m.err }
+func (m *mockRBACRepo) FindRoleByUUID(_ string) (*rbac_entities.Role, error)           { return m.role, m.err }
+func (m *mockRBACRepo) ListRoles() ([]rbac_entities.Role, error)                       { return nil, m.err }
+func (m *mockRBACRepo) UpdateRole(_ *rbac_entities.Role) error                         { return m.err }
+func (m *mockRBACRepo) DeleteRole(_ uint) error                                        { return m.err }
+func (m *mockRBACRepo) CreatePermission(p *rbac_entities.Permission) error             { return m.err }
+func (m *mockRBACRepo) FindPermissionByUUID(_ string) (*rbac_entities.Permission, error) { return m.permission, m.err }
+func (m *mockRBACRepo) GetPermissionsByRole(_ uint) ([]rbac_entities.Permission, error) { return nil, m.err }
+func (m *mockRBACRepo) AssignPermissionToRole(_, _ uint) error                         { return m.err }
+func (m *mockRBACRepo) RemovePermissionFromRole(_, _ uint) error                       { return m.err }
+func (m *mockRBACRepo) AssignRoleToUser(_, _ uint) error                               { return m.err }
+func (m *mockRBACRepo) RemoveRoleFromUser(_, _ uint) error                             { return m.err }
+func (m *mockRBACRepo) GetRolesByUser(_ uint) ([]rbac_entities.Role, error)            { return nil, m.err }
+func (m *mockRBACRepo) UserHasPermission(_ uint, _ string) (bool, error)              { return m.hasPerm, m.err }
 
 func newTestRBACSvc(repo RBACRepository) *RBACService {
 	return NewRBACService(repo)

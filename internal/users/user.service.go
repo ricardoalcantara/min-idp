@@ -17,6 +17,8 @@ type UserRepository interface {
 	FindByUUID(uuid string) (*user_entities.User, error)
 	FindByEmail(email string) (*user_entities.User, error)
 	Update(u *user_entities.User) error
+	List(offset, limit int) ([]*user_entities.User, int64, error)
+	Delete(id uint) error
 }
 
 type UserService struct {
@@ -70,6 +72,38 @@ func (s *UserService) Authenticate(email, password string) (*user_entities.User,
 		return nil, ErrInvalidCredentials
 	}
 	return u, nil
+}
+
+func (s *UserService) List(page, pageSize int) ([]*user_entities.User, int64, error) {
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+	if page <= 0 {
+		page = 1
+	}
+	return s.repo.List((page-1)*pageSize, pageSize)
+}
+
+func (s *UserService) Update(uuid string, email, status *string) (*user_entities.User, error) {
+	u, err := s.repo.FindByUUID(uuid)
+	if err != nil {
+		return nil, err
+	}
+	if email != nil {
+		u.Email = *email
+	}
+	if status != nil {
+		u.Status = *status
+	}
+	return u, s.repo.Update(u)
+}
+
+func (s *UserService) Delete(uuid string) error {
+	u, err := s.repo.FindByUUID(uuid)
+	if err != nil {
+		return err
+	}
+	return s.repo.Delete(u.ID)
 }
 
 func (s *UserService) UpdatePassword(userID uint, newPassword string) error {

@@ -15,4 +15,5 @@ func Register(app *core.App) {
 	app.Provide(NewRBACService)
 	app.Provide(NewRBACController)
 	app.Provide(NewGroupController)
+	app.Provide(NewGroupService)
 }

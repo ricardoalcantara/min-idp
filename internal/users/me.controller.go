@@ -36,7 +36,25 @@ func (c *MeController) me(ctx *gin.Context) {
 }
 
 func (c *MeController) update(ctx *gin.Context) {
-	ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented"))
+	var input user_dto.UpdateMeDto
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		ctx.JSON(http.StatusBadRequest, web.NewErrorDto(err))
+		return
+	}
+	sess := session.FromContext(ctx)
+	u, err := c.service.FindByID(sess.UserID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
+		return
+	}
+	if input.Email != nil {
+		u.Email = *input.Email
+	}
+	if err := c.service.repo.Update(u); err != nil {
+		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, user_dto.NewUserDto(u))
 }
 
 func (c *MeController) sessions(ctx *gin.Context) {
@@ -63,5 +81,19 @@ func (c *MeController) revokeAllSessions(ctx *gin.Context) {
 }
 
 func (c *MeController) revokeSession(ctx *gin.Context) {
-	ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented"))
+	current := session.FromContext(ctx)
+	target, err := c.sessionSvc.GetByUUID(ctx.Request.Context(), ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, web.NewErrorDto(errors.New("session not found")))
+		return
+	}
+	if target.UserID != current.UserID {
+		ctx.JSON(http.StatusForbidden, web.NewErrorDto(errors.New("forbidden")))
+		return
+	}
+	if err := c.sessionSvc.Revoke(ctx.Request.Context(), target.ID); err != nil {
+		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
+		return
+	}
+	ctx.Status(http.StatusNoContent)
 }

@@ -1,13 +1,15 @@
 package users
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-minstack/web"
+	"github.com/ricardoalcantara/min-idp/internal/db"
 	session_dto "github.com/ricardoalcantara/min-idp/internal/session/dto"
-	user_dto "github.com/ricardoalcantara/min-idp/internal/users/dto"
 	"github.com/ricardoalcantara/min-idp/internal/session"
+	user_dto "github.com/ricardoalcantara/min-idp/internal/users/dto"
 )
 
 type MeController struct {
@@ -23,6 +25,10 @@ func (c *MeController) me(ctx *gin.Context) {
 	sess := session.FromContext(ctx)
 	u, err := c.service.FindByID(sess.UserID)
 	if err != nil {
+		if errors.Is(err, db.ErrEntityNotFound) {
+			ctx.JSON(http.StatusNotFound, web.NewErrorDto(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
 		return
 	}

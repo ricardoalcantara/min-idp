@@ -23,8 +23,12 @@ func NewSAMLController(ks keystore.KeyStore, cfg *config.Config) *SAMLController
 
 func (c *SAMLController) metadata(ctx *gin.Context) {
 	keys, err := c.ks.PublicKeys(ctx.Request.Context(), keystore_entities.ProtocolSAML)
-	if err != nil || len(keys) == 0 {
-		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(nil))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
+		return
+	}
+	if len(keys) == 0 {
+		ctx.JSON(http.StatusServiceUnavailable, web.NewErrorDto(nil))
 		return
 	}
 
@@ -56,7 +60,7 @@ func (c *SAMLController) metadata(ctx *gin.Context) {
 
 	out, err := xml.MarshalIndent(desc, "", "  ")
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(nil))
+		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
 		return
 	}
 	ctx.Data(http.StatusOK, "application/samlmetadata+xml", append([]byte(xml.Header), out...))

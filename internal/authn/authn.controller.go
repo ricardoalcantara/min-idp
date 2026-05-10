@@ -1,6 +1,7 @@
 package authn
 
 import (
+	"errors"
 	"html/template"
 	"net/http"
 	"strings"
@@ -63,7 +64,11 @@ func (c *AuthnController) login(ctx *gin.Context) {
 
 	u, err := c.service.Authenticate(input.Email, input.Password)
 	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, web.NewErrorDto(err))
+		if errors.Is(err, ErrInvalidCredentials) {
+			ctx.JSON(http.StatusUnauthorized, web.NewErrorDto(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
 		return
 	}
 
@@ -84,8 +89,13 @@ func (c *AuthnController) loginForm(ctx *gin.Context) {
 
 	u, err := c.service.Authenticate(email, password)
 	if err != nil {
-		ctx.Status(http.StatusUnauthorized)
-		_ = loginTmpl.Execute(ctx.Writer, map[string]string{"State": state, "Error": "Invalid email or password."})
+		if errors.Is(err, ErrInvalidCredentials) {
+			ctx.Status(http.StatusUnauthorized)
+			_ = loginTmpl.Execute(ctx.Writer, map[string]string{"State": state, "Error": "Invalid email or password."})
+		} else {
+			ctx.Status(http.StatusInternalServerError)
+			_ = loginTmpl.Execute(ctx.Writer, map[string]string{"State": state, "Error": "Internal error. Please try again."})
+		}
 		return
 	}
 

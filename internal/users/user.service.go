@@ -8,8 +8,8 @@ import (
 	user_entities "github.com/ricardoalcantara/min-idp/internal/users/entities"
 )
 
-var errInvalidCredentials = errors.New("invalid credentials")
-var errAccountNotActive = errors.New("account is not active")
+var ErrInvalidCredentials = errors.New("invalid credentials")
+var ErrAccountNotActive = errors.New("account is not active")
 
 type UserRepository interface {
 	Create(u *user_entities.User) error
@@ -59,15 +59,15 @@ func (s *UserService) Authenticate(email, password string) (*user_entities.User,
 	u, err := s.repo.FindByEmail(email)
 	if err != nil {
 		if err == db.ErrEntityNotFound {
-			return nil, errInvalidCredentials
+			return nil, ErrInvalidCredentials
 		}
 		return nil, err
 	}
 	if u.Status != "active" {
-		return nil, errAccountNotActive
+		return nil, ErrAccountNotActive
 	}
 	if err := crypto.VerifyPassword(u.PasswordHash, password); err != nil {
-		return nil, errInvalidCredentials
+		return nil, ErrInvalidCredentials
 	}
 	return u, nil
 }

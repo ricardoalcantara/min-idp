@@ -3,10 +3,11 @@ package authn
 import (
 	"errors"
 
+	"github.com/ricardoalcantara/min-idp/internal/users"
 	user_entities "github.com/ricardoalcantara/min-idp/internal/users/entities"
 )
 
-var errInvalidCredentials = errors.New("invalid credentials")
+var ErrInvalidCredentials = errors.New("invalid credentials")
 
 type UserAuthenticator interface {
 	Authenticate(email, password string) (*user_entities.User, error)
@@ -23,7 +24,10 @@ func NewAuthnService(users UserAuthenticator) *AuthnService {
 func (s *AuthnService) Authenticate(email, password string) (*user_entities.User, error) {
 	u, err := s.users.Authenticate(email, password)
 	if err != nil {
-		return nil, errInvalidCredentials
+		if errors.Is(err, users.ErrInvalidCredentials) || errors.Is(err, users.ErrAccountNotActive) {
+			return nil, ErrInvalidCredentials
+		}
+		return nil, err
 	}
 	return u, nil
 }

@@ -8,31 +8,31 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	bootstrap_repositories "github.com/ricardoalcantara/min-idp/internal/bootstrap/repositories"
 	"github.com/ricardoalcantara/min-idp/internal/config"
 	localcrypto "github.com/ricardoalcantara/min-idp/internal/crypto"
-	keystore_entities "github.com/ricardoalcantara/min-idp/internal/keystore/entities"
 	"github.com/ricardoalcantara/min-idp/internal/keystore"
+	keystore_entities "github.com/ricardoalcantara/min-idp/internal/keystore/entities"
 	"github.com/ricardoalcantara/min-idp/internal/rbac"
 	"github.com/ricardoalcantara/min-idp/internal/users"
-	"gorm.io/gorm"
 )
 
-type BootstrapState struct {
-	Key   string `gorm:"primaryKey"`
-	Value string `gorm:"not null"`
+type BootstrapRepository interface {
+	IsInitialized(ctx context.Context) (bool, error)
+	SetInitialized(ctx context.Context) error
 }
 
 type BootstrapService struct {
-	db       *gorm.DB
-	ks       keystore.KeyStore
-	rbacSvc  *rbac.RBACService
-	usersSvc *users.UserService
+	repo      BootstrapRepository
+	ks        keystore.KeyStore
+	rbacSvc   *rbac.RBACService
+	usersSvc  *users.UserService
 	masterKey []byte
-	log      *slog.Logger
+	log       *slog.Logger
 }
 
 func NewBootstrapService(
-	db *gorm.DB,
+	repo *bootstrap_repositories.BootstrapRepository,
 	ks keystore.KeyStore,
 	rbacSvc *rbac.RBACService,
 	usersSvc *users.UserService,
@@ -44,7 +44,7 @@ func NewBootstrapService(
 		return nil, fmt.Errorf("bootstrap: %w", err)
 	}
 	return &BootstrapService{
-		db:        db,
+		repo:      repo,
 		ks:        ks,
 		rbacSvc:   rbacSvc,
 		usersSvc:  usersSvc,
@@ -54,8 +54,11 @@ func NewBootstrapService(
 }
 
 func (s *BootstrapService) Run(ctx context.Context) error {
-	var state BootstrapState
-	if err := s.db.Where("key = ?", "initialized").First(&state).Error; err == nil && state.Value == "true" {
+	initialized, err := s.repo.IsInitialized(ctx)
+	if err != nil {
+		return fmt.Errorf("bootstrap: check state: %w", err)
+	}
+	if initialized {
 		s.log.Info("bootstrap: already initialized")
 		return nil
 	}
@@ -104,7 +107,7 @@ func (s *BootstrapService) Run(ctx context.Context) error {
 		}
 	}
 
-	if err := s.db.Save(&BootstrapState{Key: "initialized", Value: "true"}).Error; err != nil {
+	if err := s.repo.SetInitialized(ctx); err != nil {
 		return fmt.Errorf("bootstrap: save state: %w", err)
 	}
 

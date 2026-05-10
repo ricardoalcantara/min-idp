@@ -36,7 +36,7 @@ func (c *MeController) me(ctx *gin.Context) {
 }
 
 func (c *MeController) update(ctx *gin.Context) {
-	ctx.JSON(http.StatusNotImplemented, web.NewErrorDto(nil))
+	ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented"))
 }
 
 func (c *MeController) sessions(ctx *gin.Context) {
@@ -63,5 +63,5 @@ func (c *MeController) revokeAllSessions(ctx *gin.Context) {
 }
 
 func (c *MeController) revokeSession(ctx *gin.Context) {
-	ctx.JSON(http.StatusNotImplemented, web.NewErrorDto(nil))
+	ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented"))
 }

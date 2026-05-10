@@ -16,7 +16,7 @@ func NewRBACController(service *RBACService) *RBACController {
 }
 
 func notImpl(ctx *gin.Context) {
-	ctx.JSON(http.StatusNotImplemented, web.NewErrorDto(nil))
+	ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented"))
 }
 
 func (c *RBACController) list(ctx *gin.Context)            { notImpl(ctx) }

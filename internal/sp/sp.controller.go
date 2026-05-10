@@ -16,7 +16,7 @@ func NewSPController(service *SPService) *SPController {
 }
 
 func notImpl(ctx *gin.Context) {
-	ctx.JSON(http.StatusNotImplemented, web.NewErrorDto(nil))
+	ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented"))
 }
 
 func (c *SPController) list(ctx *gin.Context)      { notImpl(ctx) }

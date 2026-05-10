@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -29,7 +30,7 @@ func (s *SessionService) Middleware(cookieName string) gin.HandlerFunc {
 func RequireSession() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if _, exists := c.Get("session"); !exists {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, web.NewErrorDto(nil))
+			c.AbortWithStatusJSON(http.StatusUnauthorized, web.NewErrorDto(errors.New("authentication required")))
 			return
 		}
 		c.Next()

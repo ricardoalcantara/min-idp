@@ -21,6 +21,10 @@ type Config struct {
 
 	PostLoginURL string `env:"MIN_IDP_POST_LOGIN_URL" envDefault:"/"`
 
+	// AdminPassword pins the initial admin password on first bootstrap.
+	// Leave empty to generate a random password (recommended for production).
+	AdminPassword string `env:"MIN_IDP_ADMIN_PASSWORD"`
+
 	FeatureAPIRegistration bool `env:"MIN_IDP_FEATURE_API_REGISTRATION" envDefault:"false"`
 	FeatureAPILogin        bool `env:"MIN_IDP_FEATURE_API_LOGIN"        envDefault:"true"`
 }

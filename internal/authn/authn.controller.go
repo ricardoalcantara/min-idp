@@ -132,8 +132,8 @@ func (c *AuthnController) logout(ctx *gin.Context) {
 
 func (c *AuthnController) register(ctx *gin.Context) {
 	if !c.cfg.FeatureAPIRegistration {
-		ctx.JSON(http.StatusForbidden, web.NewErrorDto(nil))
+		ctx.JSON(http.StatusForbidden, web.NewErrorDto(errors.New("registration is disabled")))
 		return
 	}
-	ctx.JSON(http.StatusNotImplemented, web.NewErrorDto(nil))
+	ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented"))
 }

@@ -49,9 +49,9 @@ func (c *OIDCController) jwks(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, jwks)
 }
 
-func (c *OIDCController) authorize(ctx *gin.Context)  { ctx.JSON(http.StatusNotImplemented, web.NewErrorDto(nil)) }
-func (c *OIDCController) token(ctx *gin.Context)       { ctx.JSON(http.StatusNotImplemented, web.NewErrorDto(nil)) }
-func (c *OIDCController) userinfo(ctx *gin.Context)    { ctx.JSON(http.StatusNotImplemented, web.NewErrorDto(nil)) }
-func (c *OIDCController) revoke(ctx *gin.Context)      { ctx.JSON(http.StatusNotImplemented, web.NewErrorDto(nil)) }
-func (c *OIDCController) introspect(ctx *gin.Context)  { ctx.JSON(http.StatusNotImplemented, web.NewErrorDto(nil)) }
-func (c *OIDCController) logout(ctx *gin.Context)      { ctx.JSON(http.StatusNotImplemented, web.NewErrorDto(nil)) }
+func (c *OIDCController) authorize(ctx *gin.Context)  { ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented")) }
+func (c *OIDCController) token(ctx *gin.Context)       { ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented")) }
+func (c *OIDCController) userinfo(ctx *gin.Context)    { ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented")) }
+func (c *OIDCController) revoke(ctx *gin.Context)      { ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented")) }
+func (c *OIDCController) introspect(ctx *gin.Context)  { ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented")) }
+func (c *OIDCController) logout(ctx *gin.Context)      { ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented")) }

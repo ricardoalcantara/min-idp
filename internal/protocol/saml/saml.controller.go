@@ -2,6 +2,7 @@ package saml
 
 import (
 	"encoding/xml"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -28,7 +29,7 @@ func (c *SAMLController) metadata(ctx *gin.Context) {
 		return
 	}
 	if len(keys) == 0 {
-		ctx.JSON(http.StatusServiceUnavailable, web.NewErrorDto(nil))
+		ctx.JSON(http.StatusServiceUnavailable, web.NewErrorDto(errors.New("no signing key available")))
 		return
 	}
 
@@ -66,8 +67,8 @@ func (c *SAMLController) metadata(ctx *gin.Context) {
 	ctx.Data(http.StatusOK, "application/samlmetadata+xml", append([]byte(xml.Header), out...))
 }
 
-func (c *SAMLController) sso(ctx *gin.Context) { ctx.JSON(http.StatusNotImplemented, web.NewErrorDto(nil)) }
-func (c *SAMLController) slo(ctx *gin.Context) { ctx.JSON(http.StatusNotImplemented, web.NewErrorDto(nil)) }
+func (c *SAMLController) sso(ctx *gin.Context) { ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented")) }
+func (c *SAMLController) slo(ctx *gin.Context) { ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented")) }
 
 // XML types
 type entityDescriptor struct {

@@ -16,5 +16,5 @@ func NewAuditController(service *AuditService) *AuditController {
 }
 
 func (c *AuditController) list(ctx *gin.Context) {
-	ctx.JSON(http.StatusNotImplemented, web.NewErrorDto(nil))
+	ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented"))
 }

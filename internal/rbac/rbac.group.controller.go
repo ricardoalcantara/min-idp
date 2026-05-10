@@ -16,8 +16,8 @@ func NewGroupController(repo *rbac_repositories.GroupRepository) *GroupControlle
 	return &GroupController{repo: repo}
 }
 
-func (c *GroupController) list(ctx *gin.Context)   { ctx.JSON(http.StatusNotImplemented, web.NewErrorDto(nil)) }
-func (c *GroupController) create(ctx *gin.Context)  { ctx.JSON(http.StatusNotImplemented, web.NewErrorDto(nil)) }
-func (c *GroupController) get(ctx *gin.Context)     { ctx.JSON(http.StatusNotImplemented, web.NewErrorDto(nil)) }
-func (c *GroupController) update(ctx *gin.Context)  { ctx.JSON(http.StatusNotImplemented, web.NewErrorDto(nil)) }
-func (c *GroupController) delete(ctx *gin.Context)  { ctx.JSON(http.StatusNotImplemented, web.NewErrorDto(nil)) }
+func (c *GroupController) list(ctx *gin.Context)   { ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented")) }
+func (c *GroupController) create(ctx *gin.Context)  { ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented")) }
+func (c *GroupController) get(ctx *gin.Context)     { ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented")) }
+func (c *GroupController) update(ctx *gin.Context)  { ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented")) }
+func (c *GroupController) delete(ctx *gin.Context)  { ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented")) }

@@ -23,12 +23,13 @@ type BootstrapRepository interface {
 }
 
 type BootstrapService struct {
-	repo      BootstrapRepository
-	ks        keystore.KeyStore
-	rbacSvc   *rbac.RBACService
-	usersSvc  *users.UserService
-	masterKey []byte
-	log       *slog.Logger
+	repo          BootstrapRepository
+	ks            keystore.KeyStore
+	rbacSvc       *rbac.RBACService
+	usersSvc      *users.UserService
+	masterKey     []byte
+	adminPassword string
+	log           *slog.Logger
 }
 
 func NewBootstrapService(
@@ -44,12 +45,13 @@ func NewBootstrapService(
 		return nil, fmt.Errorf("bootstrap: %w", err)
 	}
 	return &BootstrapService{
-		repo:      repo,
-		ks:        ks,
-		rbacSvc:   rbacSvc,
-		usersSvc:  usersSvc,
-		masterKey: masterKey,
-		log:       log,
+		repo:          repo,
+		ks:            ks,
+		rbacSvc:       rbacSvc,
+		usersSvc:      usersSvc,
+		masterKey:     masterKey,
+		adminPassword: cfg.AdminPassword,
+		log:           log,
 	}, nil
 }
 
@@ -86,12 +88,15 @@ func (s *BootstrapService) Run(ctx context.Context) error {
 		}
 	}
 
-	password, err := localcrypto.GenerateSecureToken(12)
-	if err != nil {
-		return fmt.Errorf("bootstrap: generate password: %w", err)
+	password := s.adminPassword
+	if password == "" {
+		password, err = localcrypto.GenerateSecureToken(12)
+		if err != nil {
+			return fmt.Errorf("bootstrap: generate password: %w", err)
+		}
 	}
 
-	adminEmail := "admin@localhost"
+	adminEmail := "admin@min-idp.local"
 	adminUser, err := s.usersSvc.Create(adminEmail, password)
 	if err != nil {
 		return fmt.Errorf("bootstrap: create admin: %w", err)

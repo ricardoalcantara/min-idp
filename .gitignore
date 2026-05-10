@@ -1,0 +1,7 @@
+min-idp
+*.db
+*.db-wal
+*.db-shm
+.env
+.air.toml
+tmp/

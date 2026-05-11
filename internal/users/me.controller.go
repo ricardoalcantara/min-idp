@@ -22,8 +22,8 @@ func NewMeController(service *UserService, sessionSvc *session.SessionService) *
 }
 
 func (c *MeController) me(ctx *gin.Context) {
-	sess := session.FromContext(ctx)
-	u, err := c.service.FindByID(sess.UserID)
+	claims := session.FromContext(ctx)
+	u, err := c.service.FindByID(claims.UserID)
 	if err != nil {
 		if errors.Is(err, db.ErrEntityNotFound) {
 			ctx.JSON(http.StatusNotFound, web.NewErrorDto(err))
@@ -41,8 +41,8 @@ func (c *MeController) update(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, web.NewErrorDto(err))
 		return
 	}
-	sess := session.FromContext(ctx)
-	u, err := c.service.FindByID(sess.UserID)
+	claims := session.FromContext(ctx)
+	u, err := c.service.FindByID(claims.UserID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
 		return
@@ -58,8 +58,8 @@ func (c *MeController) update(ctx *gin.Context) {
 }
 
 func (c *MeController) sessions(ctx *gin.Context) {
-	sess := session.FromContext(ctx)
-	sessions, err := c.sessionSvc.List(ctx.Request.Context(), sess.UserID)
+	claims := session.FromContext(ctx)
+	sessions, err := c.sessionSvc.List(ctx.Request.Context(), claims.UserID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
 		return
@@ -72,8 +72,8 @@ func (c *MeController) sessions(ctx *gin.Context) {
 }
 
 func (c *MeController) revokeAllSessions(ctx *gin.Context) {
-	sess := session.FromContext(ctx)
-	if err := c.sessionSvc.RevokeAllExcept(ctx.Request.Context(), sess.UserID, sess.ID); err != nil {
+	claims := session.FromContext(ctx)
+	if err := c.sessionSvc.RevokeAllExcept(ctx.Request.Context(), claims.UserID, claims.SessionUUID); err != nil {
 		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
 		return
 	}
@@ -81,17 +81,19 @@ func (c *MeController) revokeAllSessions(ctx *gin.Context) {
 }
 
 func (c *MeController) revokeSession(ctx *gin.Context) {
-	current := session.FromContext(ctx)
-	target, err := c.sessionSvc.GetByUUID(ctx.Request.Context(), ctx.Param("id"))
+	claims := session.FromContext(ctx)
+	targetUUID := ctx.Param("id")
+
+	target, err := c.sessionSvc.GetByUUID(ctx.Request.Context(), targetUUID)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, web.NewErrorDto(errors.New("session not found")))
 		return
 	}
-	if target.UserID != current.UserID {
+	if target.UserID != claims.UserID {
 		ctx.JSON(http.StatusForbidden, web.NewErrorDto(errors.New("forbidden")))
 		return
 	}
-	if err := c.sessionSvc.Revoke(ctx.Request.Context(), target.ID); err != nil {
+	if err := c.sessionSvc.Revoke(ctx.Request.Context(), targetUUID); err != nil {
 		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
 		return
 	}

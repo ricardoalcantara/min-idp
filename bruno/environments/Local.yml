@@ -5,4 +5,4 @@ variables:
   - secret: true
     name: adminPassword
   - secret: true
-    name: sessionId
+    name: accessToken

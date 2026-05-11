@@ -8,7 +8,7 @@ http:
   url: "{{baseUrl}}/api/admin/sps"
   auth:
     type: bearer
-    token: "{{sessionId}}"
+    token: "{{accessToken}}"
 
 settings:
   encodeUrl: true

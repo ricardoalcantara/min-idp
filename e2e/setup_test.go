@@ -116,7 +116,7 @@ func (a *testApp) request(t *testing.T, method, path string, body any, headers .
 	return w
 }
 
-// mustLogin authenticates and returns the session UUID as a bearer token.
+// mustLogin authenticates and returns the JWT access token for use as a bearer.
 func (a *testApp) mustLogin(t *testing.T, email, password string) string {
 	t.Helper()
 	w := a.request(t, http.MethodPost, "/api/auth/login", map[string]any{
@@ -125,7 +125,7 @@ func (a *testApp) mustLogin(t *testing.T, email, password string) string {
 	})
 	require.Equal(t, http.StatusOK, w.Code)
 	resp := decodeJSON[map[string]string](t, w)
-	token := resp["session_id"]
+	token := resp["access_token"]
 	require.NotEmpty(t, token)
 	return token
 }

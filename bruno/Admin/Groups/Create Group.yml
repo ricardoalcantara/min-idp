@@ -8,7 +8,7 @@ http:
   url: "{{baseUrl}}/api/admin/groups"
   auth:
     type: bearer
-    token: "{{sessionId}}"
+    token: "{{accessToken}}"
   body:
     type: json
     data: |-

@@ -17,7 +17,9 @@ func TestAuthn_Login_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	resp := decodeJSON[map[string]string](t, w)
-	assert.NotEmpty(t, resp["session_id"])
+	token := resp["access_token"]
+	assert.NotEmpty(t, token)
+	assert.Contains(t, token, ".", "expected JWT format")
 }
 
 func TestAuthn_Login_WrongPassword(t *testing.T) {

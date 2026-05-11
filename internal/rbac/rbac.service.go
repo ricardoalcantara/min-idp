@@ -19,6 +19,7 @@ type RBACRepository interface {
 	RemoveRoleFromUser(userID, roleID uint) error
 	GetRolesByUser(userID uint) ([]rbac_entities.Role, error)
 	UserHasPermission(userID uint, permission string) (bool, error)
+	GetUserPermissions(userID uint) ([]string, error)
 }
 
 type RBACService struct {
@@ -123,4 +124,8 @@ func (s *RBACService) GetRolesByUser(userID uint) ([]rbac_entities.Role, error) 
 
 func (s *RBACService) UserHasPermission(userID uint, permission string) (bool, error) {
 	return s.repo.UserHasPermission(userID, permission)
+}
+
+func (s *RBACService) GetUserPermissions(userID uint) ([]string, error) {
+	return s.repo.GetUserPermissions(userID)
 }

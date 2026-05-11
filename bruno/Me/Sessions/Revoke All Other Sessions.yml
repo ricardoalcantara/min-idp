@@ -1,5 +1,5 @@
 info:
-  name: Revoke All Sessions
+  name: Revoke All Other Sessions
   type: http
   seq: 2
 
@@ -8,7 +8,7 @@ http:
   url: "{{baseUrl}}/api/me/sessions"
   auth:
     type: bearer
-    token: "{{sessionId}}"
+    token: "{{accessToken}}"
 
 settings:
   encodeUrl: true

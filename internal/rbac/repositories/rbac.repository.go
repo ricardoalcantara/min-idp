@@ -120,3 +120,14 @@ func (r *RBACRepository) UserHasPermission(userID uint, permission string) (bool
 		Count(&count).Error
 	return count > 0, err
 }
+
+func (r *RBACRepository) GetUserPermissions(userID uint) ([]string, error) {
+	var names []string
+	err := r.db.Model(&rbac_entities.Permission{}).
+		Joins("JOIN role_permissions ON role_permissions.permission_id = permissions.id").
+		Joins("JOIN user_roles ON user_roles.role_id = role_permissions.role_id").
+		Where("user_roles.user_id = ?", userID).
+		Distinct("permissions.name").
+		Pluck("name", &names).Error
+	return names, err
+}

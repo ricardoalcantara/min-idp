@@ -8,12 +8,12 @@ http:
   url: "{{baseUrl}}/api/auth/logout"
   auth:
     type: bearer
-    token: "{{sessionId}}"
+    token: "{{accessToken}}"
 
 runtime:
   scripts:
     - type: after-response
-      code: bru.setEnvVar("sessionId", "")
+      code: bru.setEnvVar("accessToken", "")
 
 settings:
   encodeUrl: true

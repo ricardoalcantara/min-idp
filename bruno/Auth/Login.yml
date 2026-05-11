@@ -17,7 +17,7 @@ http:
 runtime:
   scripts:
     - type: after-response
-      code: bru.setEnvVar("sessionId", res.body.session_id)
+      code: bru.setEnvVar("accessToken", res.body.access_token)
 
 settings:
   encodeUrl: true

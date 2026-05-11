@@ -12,4 +12,5 @@ func Register(app *core.App) {
 		fx.As(new(SessionRepository)),
 	))
 	app.Provide(NewSessionService)
+	app.Provide(NewCookieTokenService)
 }

@@ -19,8 +19,6 @@ type Config struct {
 	SessionTTL    time.Duration `env:"MIN_IDP_SESSION_TTL"    envDefault:"12h"`
 	SessionIdle   time.Duration `env:"MIN_IDP_SESSION_IDLE"   envDefault:"1h"`
 
-	PostLoginURL string `env:"MIN_IDP_POST_LOGIN_URL" envDefault:"/"`
-
 	// AdminPassword pins the initial admin password on first bootstrap.
 	// Leave empty to generate a random password (recommended for production).
 	AdminPassword string `env:"MIN_IDP_ADMIN_PASSWORD"`

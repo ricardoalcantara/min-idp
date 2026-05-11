@@ -9,11 +9,12 @@ import (
 	"github.com/ricardoalcantara/min-idp/internal/config"
 	"github.com/ricardoalcantara/min-idp/internal/db"
 	session_entities "github.com/ricardoalcantara/min-idp/internal/session/entities"
+	"github.com/ricardoalcantara/min-idp/internal/kvstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// --- mock ---
+// --- mocks ---
 
 type mockSessionRepo struct {
 	session *session_entities.Session
@@ -28,13 +29,25 @@ func (m *mockSessionRepo) FindByUUID(_ string) (*session_entities.Session, error
 func (m *mockSessionRepo) FindActiveByUserID(_ uint) ([]session_entities.Session, error) {
 	return m.list, m.err
 }
-func (m *mockSessionRepo) Touch(_ context.Context, _ uint) error              { return m.err }
-func (m *mockSessionRepo) Revoke(_ context.Context, _ uint) error             { return m.err }
-func (m *mockSessionRepo) RevokeAll(_ context.Context, _ uint) error          { return m.err }
-func (m *mockSessionRepo) RevokeAllExcept(_ context.Context, _, _ uint) error { return m.err }
+func (m *mockSessionRepo) RevokeByUUID(_ context.Context, _ string) (*session_entities.Session, error) {
+	return m.session, m.err
+}
+func (m *mockSessionRepo) RevokeAllExceptUUID(_ context.Context, _ uint, _ string) ([]session_entities.Session, error) {
+	return nil, m.err
+}
+func (m *mockSessionRepo) RevokeAll(_ context.Context, _ uint) error { return m.err }
+
+type mockKV struct{}
+
+func (m *mockKV) Set(_ context.Context, _ string, _ []byte, _ time.Duration) error      { return nil }
+func (m *mockKV) Get(_ context.Context, _ string) ([]byte, error)                       { return nil, kvstore.ErrNotFound }
+func (m *mockKV) Delete(_ context.Context, _ string) error                              { return nil }
+func (m *mockKV) SetNX(_ context.Context, _ string, _ []byte, _ time.Duration) (bool, error) {
+	return true, nil
+}
 
 func newTestSessionSvc(repo SessionRepository) *SessionService {
-	return NewSessionService(repo, &config.Config{SessionTTL: 12 * time.Hour})
+	return &SessionService{repo: repo, kv: &mockKV{}, cfg: &config.Config{SessionTTL: 12 * time.Hour}}
 }
 
 // --- Create ---

@@ -5,10 +5,10 @@ info:
 
 http:
   method: DELETE
-  url: "{{baseUrl}}/api/me/sessions/{{?sessionIdToRevoke}}"
+  url: "{{baseUrl}}/api/me/sessions/{{?accessTokenToRevoke}}"
   auth:
     type: bearer
-    token: "{{sessionId}}"
+    token: "{{accessToken}}"
 
 settings:
   encodeUrl: true

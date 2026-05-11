@@ -153,7 +153,7 @@ func (s *BootstrapService) createSigningKey(ctx context.Context, protocol, algor
 	}
 
 	now := time.Now().UTC()
-	return s.ks.InsertKey(ctx, &keystore_entities.SigningKey{
+	if err := s.ks.InsertKey(ctx, &keystore_entities.SigningKey{
 		Protocol:            protocol,
 		KID:                 uuid.NewString(),
 		Algorithm:           algorithm,
@@ -162,5 +162,8 @@ func (s *BootstrapService) createSigningKey(ctx context.Context, protocol, algor
 		Certificate:         string(certPEM),
 		Status:              keystore_entities.StatusActive,
 		ActivatedAt:         &now,
-	})
+	}); err != nil {
+		return err
+	}
+	return s.ks.Reload(ctx, protocol)
 }

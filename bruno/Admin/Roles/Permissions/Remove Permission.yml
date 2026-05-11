@@ -8,7 +8,7 @@ http:
   url: "{{baseUrl}}/api/admin/roles/{{?roleId}}/permissions/{{?permId}}"
   auth:
     type: bearer
-    token: "{{sessionId}}"
+    token: "{{accessToken}}"
 
 settings:
   encodeUrl: true

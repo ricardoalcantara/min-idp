@@ -11,12 +11,18 @@ import (
 
 func RequirePermission(rbacSvc *RBACService, perm string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		sess := session.FromContext(c)
-		if sess == nil {
+		claims := session.FromContext(c)
+		if claims == nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, web.NewErrorDto(errors.New("authentication required")))
 			return
 		}
-		ok, err := rbacSvc.UserHasPermission(sess.UserID, perm)
+		// Fast path: check JWT claims (no DB hit)
+		if claims.HasRole(perm) {
+			c.Next()
+			return
+		}
+		// Fallback: DB check (e.g. role assigned after token was issued)
+		ok, err := rbacSvc.UserHasPermission(claims.UserID, perm)
 		if err != nil || !ok {
 			c.AbortWithStatusJSON(http.StatusForbidden, web.NewErrorDto(errors.New("forbidden")))
 			return

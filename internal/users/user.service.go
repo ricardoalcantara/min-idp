@@ -17,7 +17,7 @@ type UserRepository interface {
 	FindByUUID(uuid string) (*user_entities.User, error)
 	FindByEmail(email string) (*user_entities.User, error)
 	Update(u *user_entities.User) error
-	List(offset, limit int) ([]*user_entities.User, int64, error)
+	List(page, limit int) ([]*user_entities.User, int64, error)
 	Delete(id uint) error
 }
 
@@ -81,7 +81,7 @@ func (s *UserService) List(page, pageSize int) ([]*user_entities.User, int64, er
 	if page <= 0 {
 		page = 1
 	}
-	return s.repo.List((page-1)*pageSize, pageSize)
+	return s.repo.List(page, pageSize)
 }
 
 func (s *UserService) Update(uuid string, email, status *string) (*user_entities.User, error) {

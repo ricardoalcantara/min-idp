@@ -9,8 +9,8 @@ import (
 )
 
 type AuditRepository interface {
-	Insert(e *audit_entities.Event) error
-	List(filter audit_repositories.AuditFilter, offset, limit int) ([]audit_entities.Event, int64, error)
+	Create(e *audit_entities.Event) error
+	List(filter audit_repositories.AuditFilter, page, pageSize int) ([]audit_entities.Event, int64, error)
 }
 
 type AuditService struct {
@@ -25,7 +25,7 @@ func NewAuditService(repo AuditRepository, log *slog.Logger) *AuditService {
 func (s *AuditService) Log(e audit_entities.Event) {
 	e.Timestamp = time.Now().UTC()
 	go func() {
-		if err := s.repo.Insert(&e); err != nil {
+		if err := s.repo.Create(&e); err != nil {
 			s.log.Error("audit: failed to write event", "action", e.Action, "err", err)
 		}
 	}()
@@ -38,5 +38,5 @@ func (s *AuditService) List(filter audit_repositories.AuditFilter, page, pageSiz
 	if page <= 0 {
 		page = 1
 	}
-	return s.repo.List(filter, (page-1)*pageSize, pageSize)
+	return s.repo.List(filter, page, pageSize)
 }

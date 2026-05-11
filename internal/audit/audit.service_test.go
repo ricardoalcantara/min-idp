@@ -18,7 +18,7 @@ type mockAuditRepo struct {
 	err      error
 }
 
-func (m *mockAuditRepo) Insert(e *audit_entities.Event) error {
+func (m *mockAuditRepo) Create(e *audit_entities.Event) error {
 	m.inserted = append(m.inserted, e)
 	return m.err
 }

@@ -100,7 +100,7 @@ func (ks *KeyStoreService) ListKeysByProtocol(ctx context.Context, protocol stri
 }
 
 func (ks *KeyStoreService) InsertKey(ctx context.Context, key *keystore_entities.SigningKey) error {
-	return ks.repo.Insert(ctx, key)
+	return ks.repo.Create(key)
 }
 
 func (ks *KeyStoreService) RotateKey(ctx context.Context, protocol string, newKey *keystore_entities.SigningKey) error {
@@ -109,7 +109,7 @@ func (ks *KeyStoreService) RotateKey(ctx context.Context, protocol string, newKe
 			return err
 		}
 	}
-	if err := ks.repo.Insert(ctx, newKey); err != nil {
+	if err := ks.repo.Create(newKey); err != nil {
 		return err
 	}
 	return ks.Reload(ctx, protocol)

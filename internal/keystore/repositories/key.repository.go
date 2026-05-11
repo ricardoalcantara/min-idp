@@ -2,60 +2,76 @@ package keystore_repositories
 
 import (
 	"context"
-	"errors"
 	"time"
 
+	"github.com/go-minstack/repository"
 	"github.com/ricardoalcantara/min-idp/internal/db"
 	keystore_entities "github.com/ricardoalcantara/min-idp/internal/keystore/entities"
 	gormdb "gorm.io/gorm"
 )
 
 type KeyRepository struct {
-	db *gormdb.DB
+	*repository.Repository[keystore_entities.SigningKey]
+	db *gormdb.DB // kept for SetStatus (conditional UPDATE with context)
 }
 
 func NewKeyRepository(d *gormdb.DB) *KeyRepository {
-	return &KeyRepository{db: d}
-}
-
-func (r *KeyRepository) Insert(ctx context.Context, key *keystore_entities.SigningKey) error {
-	return r.db.WithContext(ctx).Create(key).Error
+	return &KeyRepository{Repository: repository.NewRepository[keystore_entities.SigningKey](d), db: d}
 }
 
 func (r *KeyRepository) GetActive(ctx context.Context, protocol string) (*keystore_entities.SigningKey, error) {
-	var key keystore_entities.SigningKey
-	err := r.db.WithContext(ctx).
-		Where("protocol = ? AND status = ?", protocol, keystore_entities.StatusActive).
-		First(&key).Error
-	if errors.Is(err, gormdb.ErrRecordNotFound) {
-		return nil, db.ErrEntityNotFound
+	key, err := r.FindOne(repository.Where("protocol = ? AND status = ?", protocol, keystore_entities.StatusActive))
+	if err != nil {
+		if err == gormdb.ErrRecordNotFound {
+			return nil, db.ErrEntityNotFound
+		}
+		return nil, err
 	}
-	return &key, err
+	return key, nil
 }
 
 func (r *KeyRepository) ListAll(ctx context.Context) ([]*keystore_entities.SigningKey, error) {
-	var keys []*keystore_entities.SigningKey
-	err := r.db.WithContext(ctx).
-		Order("protocol ASC, created_at DESC").
-		Find(&keys).Error
-	return keys, err
+	keys, err := r.FindAll(
+		repository.Order("protocol"),
+		repository.Order("created_at", true),
+	)
+	if err != nil {
+		return nil, err
+	}
+	ptrs := make([]*keystore_entities.SigningKey, len(keys))
+	for i := range keys {
+		ptrs[i] = &keys[i]
+	}
+	return ptrs, nil
 }
 
 func (r *KeyRepository) ListByProtocol(ctx context.Context, protocol string) ([]*keystore_entities.SigningKey, error) {
-	var keys []*keystore_entities.SigningKey
-	err := r.db.WithContext(ctx).
-		Where("protocol = ?", protocol).
-		Order("created_at DESC").
-		Find(&keys).Error
-	return keys, err
+	keys, err := r.FindAll(
+		repository.Where("protocol = ?", protocol),
+		repository.Order("created_at", true),
+	)
+	if err != nil {
+		return nil, err
+	}
+	ptrs := make([]*keystore_entities.SigningKey, len(keys))
+	for i := range keys {
+		ptrs[i] = &keys[i]
+	}
+	return ptrs, nil
 }
 
 func (r *KeyRepository) ListPublished(ctx context.Context, protocol string) ([]*keystore_entities.SigningKey, error) {
-	var keys []*keystore_entities.SigningKey
-	err := r.db.WithContext(ctx).
-		Where("protocol = ? AND status IN ?", protocol, []string{keystore_entities.StatusActive, keystore_entities.StatusPrevious}).
-		Find(&keys).Error
-	return keys, err
+	keys, err := r.FindAll(
+		repository.Where("protocol = ? AND status IN ?", protocol, []string{keystore_entities.StatusActive, keystore_entities.StatusPrevious}),
+	)
+	if err != nil {
+		return nil, err
+	}
+	ptrs := make([]*keystore_entities.SigningKey, len(keys))
+	for i := range keys {
+		ptrs[i] = &keys[i]
+	}
+	return ptrs, nil
 }
 
 func (r *KeyRepository) SetStatus(ctx context.Context, id uint, status string, ts time.Time) error {

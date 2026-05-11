@@ -3,17 +3,19 @@ package rbac_repositories
 import (
 	"errors"
 
+	"github.com/go-minstack/repository"
 	"github.com/ricardoalcantara/min-idp/internal/db"
 	rbac_entities "github.com/ricardoalcantara/min-idp/internal/rbac/entities"
 	"gorm.io/gorm"
 )
 
 type RBACRepository struct {
+	*repository.Repository[rbac_entities.Role]
 	db *gorm.DB
 }
 
 func NewRBACRepository(d *gorm.DB) *RBACRepository {
-	return &RBACRepository{db: d}
+	return &RBACRepository{Repository: repository.NewRepository[rbac_entities.Role](d), db: d}
 }
 
 func (r *RBACRepository) CreateRole(role *rbac_entities.Role) error {
@@ -26,43 +28,39 @@ func (r *RBACRepository) CreateRole(role *rbac_entities.Role) error {
 }
 
 func (r *RBACRepository) FindRoleByName(name string) (*rbac_entities.Role, error) {
-	var role rbac_entities.Role
-	err := r.db.Where("name = ?", name).First(&role).Error
+	role, err := r.FindOne(repository.Where("name = ?", name))
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, db.ErrEntityNotFound
 	}
-	return &role, err
+	return role, err
 }
 
 func (r *RBACRepository) FindRoleByID(id uint) (*rbac_entities.Role, error) {
-	var role rbac_entities.Role
-	err := r.db.First(&role, id).Error
+	role, err := r.FindByID(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, db.ErrEntityNotFound
 	}
-	return &role, err
+	return role, err
 }
 
 func (r *RBACRepository) FindRoleByUUID(uuid string) (*rbac_entities.Role, error) {
-	var role rbac_entities.Role
-	err := r.db.Where("uuid = ?", uuid).First(&role).Error
+	role, err := r.FindOne(repository.Where("uuid = ?", uuid))
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, db.ErrEntityNotFound
 	}
-	return &role, err
+	return role, err
 }
 
 func (r *RBACRepository) ListRoles() ([]rbac_entities.Role, error) {
-	var roles []rbac_entities.Role
-	return roles, r.db.Find(&roles).Error
+	return r.FindAll()
 }
 
 func (r *RBACRepository) UpdateRole(role *rbac_entities.Role) error {
-	return r.db.Save(role).Error
+	return r.Update(role)
 }
 
 func (r *RBACRepository) DeleteRole(id uint) error {
-	return r.db.Delete(&rbac_entities.Role{}, id).Error
+	return r.DeleteByID(id)
 }
 
 func (r *RBACRepository) CreatePermission(perm *rbac_entities.Permission) error {

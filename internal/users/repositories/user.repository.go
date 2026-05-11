@@ -54,12 +54,23 @@ func (r *UserRepository) FindByID(id uint) (*user_entities.User, error) {
 	return &u, err
 }
 
-func (r *UserRepository) List(offset, limit int) ([]*user_entities.User, int64, error) {
-	var users []*user_entities.User
-	var total int64
-	r.db.Model(&user_entities.User{}).Count(&total)
-	err := r.db.Preload("Roles").Offset(offset).Limit(limit).Find(&users).Error
-	return users, total, err
+func (r *UserRepository) List(page, limit int) ([]*user_entities.User, int64, error) {
+	total, err := r.Count()
+	if err != nil {
+		return nil, 0, err
+	}
+	users, err := r.FindAll(
+		repository.Preload("Roles"),
+		repository.Paginate(repository.NewPagination(page, limit)),
+	)
+	if err != nil {
+		return nil, 0, err
+	}
+	ptrs := make([]*user_entities.User, len(users))
+	for i := range users {
+		ptrs[i] = &users[i]
+	}
+	return ptrs, total, nil
 }
 
 func (r *UserRepository) Delete(id uint) error {

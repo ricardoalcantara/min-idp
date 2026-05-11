@@ -3,6 +3,7 @@ package audit_repositories
 import (
 	"time"
 
+	"github.com/go-minstack/repository"
 	audit_entities "github.com/ricardoalcantara/min-idp/internal/audit/entities"
 	"gorm.io/gorm"
 )
@@ -16,40 +17,45 @@ type AuditFilter struct {
 }
 
 type AuditRepository struct {
-	db *gorm.DB
+	*repository.Repository[audit_entities.Event]
 }
 
 func NewAuditRepository(db *gorm.DB) *AuditRepository {
-	return &AuditRepository{db: db}
+	return &AuditRepository{repository.NewRepository[audit_entities.Event](db)}
 }
 
-func (r *AuditRepository) Insert(e *audit_entities.Event) error {
-	return r.db.Create(e).Error
-}
-
-func (r *AuditRepository) List(filter AuditFilter, offset, limit int) ([]audit_entities.Event, int64, error) {
-	q := r.db.Model(&audit_entities.Event{})
-
+func buildFilterOpts(filter AuditFilter) []repository.QueryOption {
+	var opts []repository.QueryOption
 	if filter.Action != "" {
-		q = q.Where("action = ?", filter.Action)
+		opts = append(opts, repository.Where("action = ?", filter.Action))
 	}
 	if filter.TargetType != "" {
-		q = q.Where("target_type = ?", filter.TargetType)
+		opts = append(opts, repository.Where("target_type = ?", filter.TargetType))
 	}
 	if filter.Result != "" {
-		q = q.Where("result = ?", filter.Result)
+		opts = append(opts, repository.Where("result = ?", filter.Result))
 	}
 	if !filter.Since.IsZero() {
-		q = q.Where("timestamp >= ?", filter.Since)
+		opts = append(opts, repository.Where("timestamp >= ?", filter.Since))
 	}
 	if !filter.Until.IsZero() {
-		q = q.Where("timestamp <= ?", filter.Until)
+		opts = append(opts, repository.Where("timestamp <= ?", filter.Until))
+	}
+	return opts
+}
+
+func (r *AuditRepository) List(filter AuditFilter, page, pageSize int) ([]audit_entities.Event, int64, error) {
+	opts := buildFilterOpts(filter)
+
+	total, err := r.Count(opts...)
+	if err != nil {
+		return nil, 0, err
 	}
 
-	var total int64
-	q.Count(&total)
-
-	var events []audit_entities.Event
-	err := q.Order("timestamp DESC").Offset(offset).Limit(limit).Find(&events).Error
+	queryOpts := append(opts,
+		repository.Order("timestamp", true),
+		repository.Paginate(repository.NewPagination(page, pageSize)),
+	)
+	events, err := r.FindAll(queryOpts...)
 	return events, total, err
 }

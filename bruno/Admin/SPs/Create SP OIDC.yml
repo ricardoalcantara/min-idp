@@ -1,0 +1,30 @@
+info:
+  name: Create SP OIDC
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/admin/sps"
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+  body:
+    type: json
+    data: |-
+      {
+        "slug": "my-app",
+        "name": "My Application",
+        "protocol": "oidc"
+      }
+
+runtime:
+  scripts:
+    - type: after-response
+      code: if (res.getStatus() === 201) { bru.setEnvVar("spId", res.getBody().id); }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

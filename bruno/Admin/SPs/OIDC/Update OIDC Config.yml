@@ -5,18 +5,23 @@ info:
 
 http:
   method: PUT
-  url: "{{baseUrl}}/api/admin/sps/{{?spId}}/oidc"
-  auth:
-    type: bearer
-    token: "{{accessToken}}"
+  url: "{{baseUrl}}/api/admin/sps/{{spId}}/oidc"
   body:
     type: json
     data: |-
       {
+        "client_id": "my-app-client",
+        "client_secret": "super-secret",
         "redirect_uris": ["https://app.example.com/callback"],
-        "scopes": ["openid","email"],
+        "grant_types": ["authorization_code"],
+        "response_types": ["code"],
+        "scopes": ["openid", "email", "profile"],
+        "token_endpoint_auth": "client_secret_basic",
         "pkce_required": true
       }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
 
 settings:
   encodeUrl: true

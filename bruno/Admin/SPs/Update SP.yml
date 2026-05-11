@@ -5,10 +5,7 @@ info:
 
 http:
   method: PATCH
-  url: "{{baseUrl}}/api/admin/sps/{{?spId}}"
-  auth:
-    type: bearer
-    token: "{{accessToken}}"
+  url: "{{baseUrl}}/api/admin/sps/{{spId}}"
   body:
     type: json
     data: |-
@@ -16,6 +13,9 @@ http:
         "name": "Updated Name",
         "enabled": true
       }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
 
 settings:
   encodeUrl: true

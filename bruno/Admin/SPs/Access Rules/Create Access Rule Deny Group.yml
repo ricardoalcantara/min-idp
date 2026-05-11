@@ -1,11 +1,11 @@
 info:
-  name: Create SP
+  name: Create Access Rule Deny Group
   type: http
-  seq: 2
+  seq: 4
 
 http:
   method: POST
-  url: "{{baseUrl}}/api/admin/sps"
+  url: "{{baseUrl}}/api/admin/sps/{{?spId}}/access-rules"
   auth:
     type: bearer
     token: "{{accessToken}}"
@@ -13,9 +13,10 @@ http:
     type: json
     data: |-
       {
-        "slug": "my-app",
-        "name": "My Application",
-        "protocol": "oidc"
+        "rule_type": "deny",
+        "subject_type": "group",
+        "subject_id": "{{?groupId}}",
+        "priority": 5
       }
 
 settings:

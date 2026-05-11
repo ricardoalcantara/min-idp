@@ -6,3 +6,11 @@ variables:
     name: adminPassword
   - secret: true
     name: accessToken
+  - name: spId
+    value: ""
+  - name: userId
+    value: ""
+  - name: roleId
+    value: ""
+  - name: groupId
+    value: ""

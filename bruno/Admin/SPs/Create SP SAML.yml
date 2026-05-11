@@ -1,0 +1,30 @@
+info:
+  name: Create SP SAML
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/admin/sps"
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+  body:
+    type: json
+    data: |-
+      {
+        "slug": "my-saml-app",
+        "name": "My SAML Application",
+        "protocol": "saml"
+      }
+
+runtime:
+  scripts:
+    - type: after-response
+      code: if (res.getStatus() === 201) { bru.setEnvVar("spId", res.getBody().id); }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

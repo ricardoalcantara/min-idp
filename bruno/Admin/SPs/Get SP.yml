@@ -1,7 +1,7 @@
 info:
   name: Get SP
   type: http
-  seq: 3
+  seq: 4
 
 http:
   method: GET
@@ -9,6 +9,11 @@ http:
   auth:
     type: bearer
     token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: if (res.getStatus() === 200) { bru.setEnvVar("spId", res.getBody().id); }
 
 settings:
   encodeUrl: true

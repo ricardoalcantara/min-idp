@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{baseUrl}}/api/admin/sps/{{?spId}}/saml"
+  url: "{{baseUrl}}/api/admin/sps/{{spId}}/saml"
   auth:
     type: bearer
     token: "{{accessToken}}"

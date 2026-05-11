@@ -18,6 +18,15 @@ func NewUserRepository(d *gormdb.DB) *UserRepository {
 	return &UserRepository{Repository: repository.NewRepository[user_entities.User](d), db: d}
 }
 
+func (r *UserRepository) Create(u *user_entities.User) error {
+	return r.db.Transaction(func(tx *gormdb.DB) error {
+		if err := tx.Create(u).Error; err != nil {
+			return err
+		}
+		return tx.Create(&db.Subject{Type: db.SubjectTypeUser, EntityID: u.ID}).Error
+	})
+}
+
 func (r *UserRepository) FindByEmail(email string) (*user_entities.User, error) {
 	var u user_entities.User
 	err := r.db.Where("email = ?", email).First(&u).Error

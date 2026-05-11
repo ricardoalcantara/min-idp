@@ -5,17 +5,21 @@ info:
 
 http:
   method: PUT
-  url: "{{baseUrl}}/api/admin/sps/{{?spId}}/saml"
-  auth:
-    type: bearer
-    token: "{{accessToken}}"
+  url: "{{baseUrl}}/api/admin/sps/{{spId}}/saml"
   body:
     type: json
     data: |-
       {
-        "entity_id": "https://app.example.com",
-        "acs_urls": ["https://app.example.com/saml/acs"]
+        "entity_id": "https://app.example.com/saml",
+        "acs_urls": ["https://app.example.com/saml/acs"],
+        "slo_url": "https://app.example.com/saml/slo",
+        "name_id_format": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+        "want_signed_assertions": true,
+        "want_signed_requests": false
       }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
 
 settings:
   encodeUrl: true

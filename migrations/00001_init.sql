@@ -1,5 +1,14 @@
 -- +goose Up
 
+-- subjects is a unified principals table: roles, groups, and users register here.
+-- access_rules.subject_id references this table, eliminating the need for subject_type on rules.
+CREATE TABLE IF NOT EXISTS subjects (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    type      TEXT NOT NULL,      -- "role" | "group" | "user"
+    entity_id INTEGER NOT NULL,
+    UNIQUE(type, entity_id)
+);
+
 CREATE TABLE IF NOT EXISTS users (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at DATETIME,
@@ -145,8 +154,7 @@ CREATE TABLE IF NOT EXISTS access_rules (
     deleted_at   DATETIME,
     sp_id        INTEGER NOT NULL,
     rule_type    TEXT NOT NULL,
-    subject_type TEXT NOT NULL,
-    subject_id   INTEGER NOT NULL,
+    subject_id   INTEGER NOT NULL REFERENCES subjects(id),
     priority     INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_access_rules_deleted_at ON access_rules(deleted_at);
@@ -210,6 +218,7 @@ DROP TABLE IF EXISTS kv_store;
 DROP TABLE IF EXISTS events;
 DROP TABLE IF EXISTS signing_keys;
 DROP TABLE IF EXISTS access_rules;
+DROP TABLE IF EXISTS subjects;
 DROP TABLE IF EXISTS saml_clients;
 DROP TABLE IF EXISTS oidc_clients;
 DROP TABLE IF EXISTS service_providers;

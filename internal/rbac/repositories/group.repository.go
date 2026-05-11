@@ -18,6 +18,15 @@ func NewGroupRepository(d *gorm.DB) *GroupRepository {
 	return &GroupRepository{Repository: repository.NewRepository[rbac_entities.Group](d), db: d}
 }
 
+func (r *GroupRepository) Create(g *rbac_entities.Group) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(g).Error; err != nil {
+			return err
+		}
+		return tx.Create(&db.Subject{Type: db.SubjectTypeGroup, EntityID: g.ID}).Error
+	})
+}
+
 func (r *GroupRepository) FindByUUID(uuid string) (*rbac_entities.Group, error) {
 	g, err := r.FindOne(repository.Where("uuid = ?", uuid))
 	if errors.Is(err, gorm.ErrRecordNotFound) {

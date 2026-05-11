@@ -2,15 +2,16 @@ package sp_entities
 
 import (
 	"github.com/ricardoalcantara/min-idp/internal/db"
+	"github.com/ricardoalcantara/min-idp/internal/types"
 	"gorm.io/gorm"
 )
 
 type ServiceProvider struct {
 	db.Model
-	Slug     string `gorm:"uniqueIndex;not null"`
-	Name     string `gorm:"not null"`
-	Protocol string `gorm:"not null"`
-	Enabled  bool   `gorm:"default:true"`
+	Slug     string         `gorm:"uniqueIndex;not null"`
+	Name     string         `gorm:"not null"`
+	Protocol types.SPProtocol `gorm:"not null"`
+	Enabled  bool           `gorm:"default:true"`
 }
 
 type OIDCClient struct {
@@ -26,6 +27,8 @@ type OIDCClient struct {
 	PKCERequired      bool   `gorm:"default:false"`
 }
 
+func (OIDCClient) TableName() string { return "oidc_clients" }
+
 type SAMLClient struct {
 	gorm.Model
 	SPID                 uint   `gorm:"uniqueIndex;not null"`
@@ -38,11 +41,15 @@ type SAMLClient struct {
 	WantSignedAssertions bool `gorm:"default:true"`
 }
 
+func (SAMLClient) TableName() string { return "saml_clients" }
+
 type AccessRule struct {
-	gorm.Model
-	SPID        uint   `gorm:"not null;index"`
-	RuleType    string `gorm:"not null"`
-	SubjectType string `gorm:"not null"`
-	SubjectID   uint   `gorm:"not null"`
-	Priority    int    `gorm:"default:0"`
+	db.Model
+	SPID      uint       `gorm:"not null;index"`
+	RuleType  string     `gorm:"not null"`
+	SubjectID uint       `gorm:"not null"`
+	Subject   db.Subject `gorm:"foreignKey:SubjectID"`
+	Priority  int        `gorm:"default:0"`
 }
+
+func (AccessRule) TableName() string { return "access_rules" }

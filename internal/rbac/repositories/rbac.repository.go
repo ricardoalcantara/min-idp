@@ -17,7 +17,12 @@ func NewRBACRepository(d *gorm.DB) *RBACRepository {
 }
 
 func (r *RBACRepository) CreateRole(role *rbac_entities.Role) error {
-	return r.db.Create(role).Error
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(role).Error; err != nil {
+			return err
+		}
+		return tx.Create(&db.Subject{Type: db.SubjectTypeRole, EntityID: role.ID}).Error
+	})
 }
 
 func (r *RBACRepository) FindRoleByName(name string) (*rbac_entities.Role, error) {

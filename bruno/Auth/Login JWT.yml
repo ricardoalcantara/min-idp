@@ -1,5 +1,5 @@
 info:
-  name: Login
+  name: Login JWT
   type: http
   seq: 1
 

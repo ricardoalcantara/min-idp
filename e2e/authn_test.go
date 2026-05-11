@@ -16,7 +16,7 @@ func TestAuthn_Login_Success(t *testing.T) {
 	})
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	resp := decodeJSON[map[string]string](t, w)
+	resp := decodeJSON[map[string]interface{}](t, w)
 	token := resp["access_token"]
 	assert.NotEmpty(t, token)
 	assert.Contains(t, token, ".", "expected JWT format")
@@ -50,7 +50,7 @@ func TestAuthn_Me_Authenticated(t *testing.T) {
 	w := app.request(t, http.MethodGet, "/api/me", nil, bearer(token))
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	resp := decodeJSON[map[string]string](t, w)
+	resp := decodeJSON[map[string]interface{}](t, w)
 	assert.Equal(t, testAdminEmail, resp["email"])
 }
 

@@ -19,26 +19,37 @@ func NewUserRepository(d *gormdb.DB) *UserRepository {
 }
 
 func (r *UserRepository) FindByEmail(email string) (*user_entities.User, error) {
-	u, err := r.FindOne(repository.Where("email = ?", email))
+	var u user_entities.User
+	err := r.db.Where("email = ?", email).First(&u).Error
 	if errors.Is(err, gormdb.ErrRecordNotFound) {
 		return nil, db.ErrEntityNotFound
 	}
-	return u, err
+	return &u, err
 }
 
 func (r *UserRepository) FindByUUID(uuid string) (*user_entities.User, error) {
-	u, err := r.FindOne(repository.Where("uuid = ?", uuid))
+	var u user_entities.User
+	err := r.db.Preload("Roles").Where("uuid = ?", uuid).First(&u).Error
 	if errors.Is(err, gormdb.ErrRecordNotFound) {
 		return nil, db.ErrEntityNotFound
 	}
-	return u, err
+	return &u, err
+}
+
+func (r *UserRepository) FindByID(id uint) (*user_entities.User, error) {
+	var u user_entities.User
+	err := r.db.Preload("Roles").First(&u, id).Error
+	if errors.Is(err, gormdb.ErrRecordNotFound) {
+		return nil, db.ErrEntityNotFound
+	}
+	return &u, err
 }
 
 func (r *UserRepository) List(offset, limit int) ([]*user_entities.User, int64, error) {
 	var users []*user_entities.User
 	var total int64
 	r.db.Model(&user_entities.User{}).Count(&total)
-	err := r.db.Offset(offset).Limit(limit).Find(&users).Error
+	err := r.db.Preload("Roles").Offset(offset).Limit(limit).Find(&users).Error
 	return users, total, err
 }
 

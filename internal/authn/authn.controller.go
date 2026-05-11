@@ -136,6 +136,17 @@ func (c *AuthnController) login(ctx *gin.Context) {
 		return
 	}
 
+	hasAPIUser, _ := c.rbacSvc.UserHasPermission(u.ID, "api:user")
+	hasAdmin, err := c.rbacSvc.UserHasPermission(u.ID, "system:admin")
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
+		return
+	}
+	if !hasAPIUser && !hasAdmin {
+		ctx.JSON(http.StatusForbidden, web.NewErrorDto(errors.New("api login not permitted for this account")))
+		return
+	}
+
 	sess, err := c.sessionSvc.Create(ctx.Request.Context(), u.ID, ctx.ClientIP(), ctx.Request.UserAgent())
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))

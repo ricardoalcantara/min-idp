@@ -1,0 +1,17 @@
+info:
+  name: Remove Permission
+  type: http
+  seq: 3
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/api/admin/roles/{{?roleId}}/permissions/{{?permId}}"
+  auth:
+    type: bearer
+    token: "{{sessionId}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

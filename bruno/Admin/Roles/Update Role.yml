@@ -1,0 +1,23 @@
+info:
+  name: Update Role
+  type: http
+  seq: 4
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/api/admin/roles/{{?roleId}}"
+  auth:
+    type: bearer
+    token: "{{sessionId}}"
+  body:
+    type: json
+    data: |-
+      {
+        "description": "Updated description"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,26 @@
+info:
+  name: Create Access Rule
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/admin/sps/{{?spId}}/access-rules"
+  auth:
+    type: bearer
+    token: "{{sessionId}}"
+  body:
+    type: json
+    data: |-
+      {
+        "rule_type": "allow",
+        "subject_type": "group",
+        "subject_id": "{{?groupId}}",
+        "priority": 10
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

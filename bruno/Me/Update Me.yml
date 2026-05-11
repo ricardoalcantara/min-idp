@@ -1,0 +1,23 @@
+info:
+  name: Update Me
+  type: http
+  seq: 2
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/api/me"
+  auth:
+    type: bearer
+    token: "{{sessionId}}"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "newemail@min-idp.local"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -31,7 +31,6 @@ import (
 )
 
 const (
-	// testMasterKey is 32 zero bytes base64-encoded — for tests only.
 	testMasterKey  = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 	testAdminEmail = "admin@min-idp.local"
 	testAdminPass  = "e2e-test-password"
@@ -92,7 +91,9 @@ func setupApp(t *testing.T) *testApp {
 	return &testApp{engine: engine, cfg: cfg}
 }
 
-func (a *testApp) request(t *testing.T, method, path string, body any, cookies ...*http.Cookie) *httptest.ResponseRecorder {
+// request sends an HTTP request to the test engine.
+// Pass "Bearer <token>" or a cookie header via the headers map.
+func (a *testApp) request(t *testing.T, method, path string, body any, headers ...map[string]string) *httptest.ResponseRecorder {
 	t.Helper()
 
 	var buf bytes.Buffer
@@ -104,8 +105,10 @@ func (a *testApp) request(t *testing.T, method, path string, body any, cookies .
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
-	for _, c := range cookies {
-		req.AddCookie(c)
+	for _, h := range headers {
+		for k, v := range h {
+			req.Header.Set(k, v)
+		}
 	}
 
 	w := httptest.NewRecorder()
@@ -113,20 +116,23 @@ func (a *testApp) request(t *testing.T, method, path string, body any, cookies .
 	return w
 }
 
-func (a *testApp) mustLogin(t *testing.T, email, password string) *http.Cookie {
+// mustLogin authenticates and returns the session UUID as a bearer token.
+func (a *testApp) mustLogin(t *testing.T, email, password string) string {
 	t.Helper()
 	w := a.request(t, http.MethodPost, "/api/auth/login", map[string]any{
 		"email":    email,
 		"password": password,
 	})
 	require.Equal(t, http.StatusOK, w.Code)
-	for _, c := range w.Result().Cookies() {
-		if c.Name == a.cfg.SessionCookie {
-			return c
-		}
-	}
-	t.Fatal("session cookie not found in login response")
-	return nil
+	resp := decodeJSON[map[string]string](t, w)
+	token := resp["session_id"]
+	require.NotEmpty(t, token)
+	return token
+}
+
+// bearer returns a headers map with the Authorization header set.
+func bearer(token string) map[string]string {
+	return map[string]string{"Authorization": "Bearer " + token}
 }
 
 func decodeJSON[T any](t *testing.T, w *httptest.ResponseRecorder) T {

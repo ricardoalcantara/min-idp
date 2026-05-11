@@ -120,9 +120,15 @@ func (c *AuthnController) loginForm(ctx *gin.Context) {
 }
 
 func (c *AuthnController) logout(ctx *gin.Context) {
-	cookie, err := ctx.Cookie(c.cfg.SessionCookie)
-	if err == nil {
-		if sess, err := c.sessionSvc.GetByUUID(ctx.Request.Context(), cookie); err == nil {
+	// Support both cookie (browser) and bearer (API client) revocation.
+	token := ""
+	if cookie, err := ctx.Cookie(c.cfg.SessionCookie); err == nil {
+		token = cookie
+	} else if auth := ctx.GetHeader("Authorization"); strings.HasPrefix(auth, "Bearer ") {
+		token = strings.TrimPrefix(auth, "Bearer ")
+	}
+	if token != "" {
+		if sess, err := c.sessionSvc.GetByUUID(ctx.Request.Context(), token); err == nil {
 			_ = c.sessionSvc.Revoke(ctx.Request.Context(), sess.ID)
 		}
 	}

@@ -1,0 +1,23 @@
+info:
+  name: Assign Role
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/admin/users/{{?userId}}/roles"
+  auth:
+    type: bearer
+    token: "{{sessionId}}"
+  body:
+    type: json
+    data: |-
+      {
+        "role_id": "{{?roleId}}"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

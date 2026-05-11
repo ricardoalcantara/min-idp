@@ -16,12 +16,8 @@ func TestAuthn_Login_Success(t *testing.T) {
 	})
 
 	assert.Equal(t, http.StatusOK, w.Code)
-
-	type loginResp struct {
-		SessionID string `json:"session_id"`
-	}
-	resp := decodeJSON[loginResp](t, w)
-	assert.NotEmpty(t, resp.SessionID)
+	resp := decodeJSON[map[string]string](t, w)
+	assert.NotEmpty(t, resp["session_id"])
 }
 
 func TestAuthn_Login_WrongPassword(t *testing.T) {
@@ -47,9 +43,9 @@ func TestAuthn_Login_MissingFields(t *testing.T) {
 
 func TestAuthn_Me_Authenticated(t *testing.T) {
 	app := setupApp(t)
-	cookie := app.mustLogin(t, testAdminEmail, testAdminPass)
+	token := app.mustLogin(t, testAdminEmail, testAdminPass)
 
-	w := app.request(t, http.MethodGet, "/api/me", nil, cookie)
+	w := app.request(t, http.MethodGet, "/api/me", nil, bearer(token))
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	resp := decodeJSON[map[string]string](t, w)
@@ -66,12 +62,12 @@ func TestAuthn_Me_Unauthenticated(t *testing.T) {
 
 func TestAuthn_Logout(t *testing.T) {
 	app := setupApp(t)
-	cookie := app.mustLogin(t, testAdminEmail, testAdminPass)
+	token := app.mustLogin(t, testAdminEmail, testAdminPass)
 
-	w := app.request(t, http.MethodPost, "/api/auth/logout", nil, cookie)
+	w := app.request(t, http.MethodPost, "/api/auth/logout", nil, bearer(token))
 	assert.Equal(t, http.StatusNoContent, w.Code)
 
-	// session no longer valid
-	w = app.request(t, http.MethodGet, "/api/me", nil, cookie)
+	// session no longer valid — bearer should be rejected
+	w = app.request(t, http.MethodGet, "/api/me", nil, bearer(token))
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }

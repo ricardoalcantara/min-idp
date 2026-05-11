@@ -1,0 +1,23 @@
+info:
+  name: Update Group
+  type: http
+  seq: 4
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/api/admin/groups/{{?groupId}}"
+  auth:
+    type: bearer
+    token: "{{sessionId}}"
+  body:
+    type: json
+    data: |-
+      {
+        "description": "Updated"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

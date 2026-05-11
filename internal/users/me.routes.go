@@ -7,7 +7,7 @@ import (
 )
 
 func RegisterMeRoutes(r *gin.Engine, c *MeController, sessionSvc *session.SessionService, cfg *config.Config) {
-	g := r.Group("/api/me", sessionSvc.Middleware(cfg.SessionCookie), session.RequireSession())
+	g := r.Group("/api/me", sessionSvc.BearerMiddleware(), session.RequireSession())
 	g.GET("", c.me)
 	g.PATCH("", c.update)
 	g.GET("/sessions", c.sessions)

@@ -1,0 +1,17 @@
+info:
+  name: List Access Rules
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/admin/sps/{{?spId}}/access-rules"
+  auth:
+    type: bearer
+    token: "{{sessionId}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,22 @@
+info:
+  name: Logout
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/auth/logout"
+  auth:
+    type: bearer
+    token: "{{sessionId}}"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setEnvVar("sessionId", "")
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

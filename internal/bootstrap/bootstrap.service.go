@@ -2,12 +2,9 @@ package bootstrap
 
 import (
 	"context"
-	"crypto/elliptic"
 	"fmt"
 	"log/slog"
-	"time"
 
-	"github.com/google/uuid"
 	bootstrap_repositories "github.com/ricardoalcantara/min-idp/internal/bootstrap/repositories"
 	"github.com/ricardoalcantara/min-idp/internal/config"
 	localcrypto "github.com/ricardoalcantara/min-idp/internal/crypto"
@@ -27,7 +24,6 @@ type BootstrapService struct {
 	ks            keystore.KeyStore
 	rbacSvc       *rbac.RBACService
 	usersSvc      *users.UserService
-	masterKey     []byte
 	adminPassword string
 	log           *slog.Logger
 }
@@ -40,8 +36,7 @@ func NewBootstrapService(
 	cfg *config.Config,
 	log *slog.Logger,
 ) (*BootstrapService, error) {
-	masterKey, err := localcrypto.DecodeMasterKey(cfg.MasterKey)
-	if err != nil {
+	if _, err := localcrypto.DecodeMasterKey(cfg.MasterKey); err != nil {
 		return nil, fmt.Errorf("bootstrap: %w", err)
 	}
 	return &BootstrapService{
@@ -49,7 +44,6 @@ func NewBootstrapService(
 		ks:            ks,
 		rbacSvc:       rbacSvc,
 		usersSvc:      usersSvc,
-		masterKey:     masterKey,
 		adminPassword: cfg.AdminPassword,
 		log:           log,
 	}, nil
@@ -67,10 +61,10 @@ func (s *BootstrapService) Run(ctx context.Context) error {
 
 	s.log.Info("bootstrap: first run, initializing...")
 
-	if err := s.createSigningKey(ctx, keystore_entities.ProtocolOIDC, "ES256"); err != nil {
+	if err := s.ks.GenerateAndRotate(ctx, keystore_entities.ProtocolOIDC); err != nil {
 		return fmt.Errorf("bootstrap: oidc key: %w", err)
 	}
-	if err := s.createSigningKey(ctx, keystore_entities.ProtocolSAML, "RS256"); err != nil {
+	if err := s.ks.GenerateAndRotate(ctx, keystore_entities.ProtocolSAML); err != nil {
 		return fmt.Errorf("bootstrap: saml key: %w", err)
 	}
 
@@ -124,46 +118,3 @@ func (s *BootstrapService) Run(ctx context.Context) error {
 	return nil
 }
 
-func (s *BootstrapService) createSigningKey(ctx context.Context, protocol, algorithm string) error {
-	var privPEM, pubPEM, certPEM []byte
-
-	switch algorithm {
-	case "ES256":
-		key, err := localcrypto.GenerateECKey(elliptic.P256())
-		if err != nil {
-			return err
-		}
-		privPEM, _ = localcrypto.MarshalPrivateKeyPEM(key)
-		pubPEM, _ = localcrypto.MarshalPublicKeyPEM(key.Public())
-	case "RS256":
-		key, err := localcrypto.GenerateRSAKey(2048)
-		if err != nil {
-			return err
-		}
-		privPEM, _ = localcrypto.MarshalPrivateKeyPEM(key)
-		pubPEM, _ = localcrypto.MarshalPublicKeyPEM(key.Public())
-		if protocol == keystore_entities.ProtocolSAML {
-			_, certPEM, _ = localcrypto.GenerateSelfSignedCert(key, "min-idp", 10*365*24*time.Hour)
-		}
-	}
-
-	encrypted, err := localcrypto.Encrypt(s.masterKey, privPEM)
-	if err != nil {
-		return err
-	}
-
-	now := time.Now().UTC()
-	if err := s.ks.InsertKey(ctx, &keystore_entities.SigningKey{
-		Protocol:            protocol,
-		KID:                 uuid.NewString(),
-		Algorithm:           algorithm,
-		PrivateKeyEncrypted: encrypted,
-		PublicKey:           string(pubPEM),
-		Certificate:         string(certPEM),
-		Status:              keystore_entities.StatusActive,
-		ActivatedAt:         &now,
-	}); err != nil {
-		return err
-	}
-	return s.ks.Reload(ctx, protocol)
-}

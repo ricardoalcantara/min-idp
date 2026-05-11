@@ -10,48 +10,57 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// MintSessionJWT signs a session JWT with the given key and returns the token string.
-// The JWT is suitable for use as an API access token or encrypted browser cookie.
+// SigningConfig groups the per-key metadata needed to mint a session token.
+type SigningConfig struct {
+	KID    string
+	Issuer string
+}
+
+type sessionClaims struct {
+	jwt.RegisteredClaims
+	UserID      uint     `json:"uid"`
+	SessionUUID string   `json:"sid"`
+	Email       string   `json:"email"`
+	Roles       []string `json:"roles"`
+}
+
+// MintSessionJWT signs a session JWT for the given user. The signing algorithm
+// is derived from the key type, eliminating alg/key mismatch at call time.
 func MintSessionJWT(
 	key crypto.PrivateKey,
-	kid, alg, issuer string,
+	cfg SigningConfig,
 	userID uint,
 	userUUID, sessionUUID, email string,
 	roles []string,
 	expiry time.Duration,
 ) (string, error) {
-	now := time.Now().UTC()
+	now := time.Now()
 
-	claims := jwt.MapClaims{
-		"iss":   issuer,
-		"sub":   userUUID,
-		"uid":   userID,
-		"sid":   sessionUUID,
-		"email": email,
-		"roles": roles,
-		"iat":   now.Unix(),
-		"exp":   now.Add(expiry).Unix(),
+	claims := sessionClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    cfg.Issuer,
+			Subject:   userUUID,
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(expiry)),
+		},
+		UserID:      userID,
+		SessionUUID: sessionUUID,
+		Email:       email,
+		Roles:       roles,
 	}
 
 	var signingMethod jwt.SigningMethod
-	switch alg {
-	case "ES256":
-		signingMethod = jwt.SigningMethodES256
-	case "RS256":
-		signingMethod = jwt.SigningMethodRS256
-	default:
-		return "", fmt.Errorf("authn: unsupported signing algorithm %q", alg)
-	}
-
-	token := jwt.NewWithClaims(signingMethod, claims)
-	token.Header["kid"] = kid
-
-	switch k := key.(type) {
+	switch key.(type) {
 	case *ecdsa.PrivateKey:
-		return token.SignedString(k)
+		signingMethod = jwt.SigningMethodES256
 	case *rsa.PrivateKey:
-		return token.SignedString(k)
+		signingMethod = jwt.SigningMethodRS256
 	default:
 		return "", fmt.Errorf("authn: unsupported key type %T", key)
 	}
+
+	token := jwt.NewWithClaims(signingMethod, claims)
+	token.Header["kid"] = cfg.KID
+
+	return token.SignedString(key)
 }

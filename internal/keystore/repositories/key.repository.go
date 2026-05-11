@@ -33,6 +33,23 @@ func (r *KeyRepository) GetActive(ctx context.Context, protocol string) (*keysto
 	return &key, err
 }
 
+func (r *KeyRepository) ListAll(ctx context.Context) ([]*keystore_entities.SigningKey, error) {
+	var keys []*keystore_entities.SigningKey
+	err := r.db.WithContext(ctx).
+		Order("protocol ASC, created_at DESC").
+		Find(&keys).Error
+	return keys, err
+}
+
+func (r *KeyRepository) ListByProtocol(ctx context.Context, protocol string) ([]*keystore_entities.SigningKey, error) {
+	var keys []*keystore_entities.SigningKey
+	err := r.db.WithContext(ctx).
+		Where("protocol = ?", protocol).
+		Order("created_at DESC").
+		Find(&keys).Error
+	return keys, err
+}
+
 func (r *KeyRepository) ListPublished(ctx context.Context, protocol string) ([]*keystore_entities.SigningKey, error) {
 	var keys []*keystore_entities.SigningKey
 	err := r.db.WithContext(ctx).

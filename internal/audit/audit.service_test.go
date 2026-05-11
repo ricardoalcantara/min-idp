@@ -7,6 +7,7 @@ import (
 	"time"
 
 	audit_entities "github.com/ricardoalcantara/min-idp/internal/audit/entities"
+	audit_repositories "github.com/ricardoalcantara/min-idp/internal/audit/repositories"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,6 +21,10 @@ type mockAuditRepo struct {
 func (m *mockAuditRepo) Insert(e *audit_entities.Event) error {
 	m.inserted = append(m.inserted, e)
 	return m.err
+}
+
+func (m *mockAuditRepo) List(_ audit_repositories.AuditFilter, _, _ int) ([]audit_entities.Event, int64, error) {
+	return nil, 0, m.err
 }
 
 func newTestAuditSvc(repo AuditRepository) *AuditService {

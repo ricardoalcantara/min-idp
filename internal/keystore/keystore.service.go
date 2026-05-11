@@ -3,6 +3,8 @@ package keystore
 import (
 	"context"
 	"crypto"
+	"crypto/elliptic"
+	"crypto/rand"
 	"fmt"
 	"log/slog"
 	"sync"
@@ -89,6 +91,14 @@ func (ks *KeyStoreService) PublicKeys(_ context.Context, protocol string) ([]*ke
 	return keys, nil
 }
 
+func (ks *KeyStoreService) ListAllKeys(ctx context.Context) ([]*keystore_entities.SigningKey, error) {
+	return ks.repo.ListAll(ctx)
+}
+
+func (ks *KeyStoreService) ListKeysByProtocol(ctx context.Context, protocol string) ([]*keystore_entities.SigningKey, error) {
+	return ks.repo.ListByProtocol(ctx, protocol)
+}
+
 func (ks *KeyStoreService) InsertKey(ctx context.Context, key *keystore_entities.SigningKey) error {
 	return ks.repo.Insert(ctx, key)
 }
@@ -103,6 +113,64 @@ func (ks *KeyStoreService) RotateKey(ctx context.Context, protocol string, newKe
 		return err
 	}
 	return ks.Reload(ctx, protocol)
+}
+
+func (ks *KeyStoreService) GenerateKey(_ context.Context, protocol string) (*keystore_entities.SigningKey, error) {
+	var privPEM, pubPEM, certPEM []byte
+	var alg string
+
+	switch protocol {
+	case keystore_entities.ProtocolOIDC:
+		key, err := localcrypto.GenerateECKey(elliptic.P256())
+		if err != nil {
+			return nil, fmt.Errorf("keystore: generate oidc key: %w", err)
+		}
+		privPEM, _ = localcrypto.MarshalPrivateKeyPEM(key)
+		pubPEM, _ = localcrypto.MarshalPublicKeyPEM(key.Public())
+		alg = "ES256"
+	case keystore_entities.ProtocolSAML:
+		key, err := localcrypto.GenerateRSAKey(2048)
+		if err != nil {
+			return nil, fmt.Errorf("keystore: generate saml key: %w", err)
+		}
+		privPEM, _ = localcrypto.MarshalPrivateKeyPEM(key)
+		pubPEM, _ = localcrypto.MarshalPublicKeyPEM(key.Public())
+		_, certPEM, _ = localcrypto.GenerateSelfSignedCert(key, "min-idp", 10*365*24*time.Hour)
+		alg = "RS256"
+	default:
+		return nil, fmt.Errorf("keystore: unsupported protocol %q", protocol)
+	}
+
+	encrypted, err := localcrypto.Encrypt(ks.masterKey, privPEM)
+	if err != nil {
+		return nil, fmt.Errorf("keystore: encrypt key: %w", err)
+	}
+
+	now := time.Now().UTC()
+	return &keystore_entities.SigningKey{
+		Protocol:            protocol,
+		KID:                 generateKID(),
+		Algorithm:           alg,
+		PrivateKeyEncrypted: encrypted,
+		PublicKey:           string(pubPEM),
+		Certificate:         string(certPEM),
+		Status:              keystore_entities.StatusActive,
+		ActivatedAt:         &now,
+	}, nil
+}
+
+func (ks *KeyStoreService) GenerateAndRotate(ctx context.Context, protocol string) error {
+	newKey, err := ks.GenerateKey(ctx, protocol)
+	if err != nil {
+		return err
+	}
+	return ks.RotateKey(ctx, protocol, newKey)
+}
+
+func generateKID() string {
+	b := make([]byte, 16)
+	_, _ = rand.Read(b)
+	return fmt.Sprintf("%x", b)
 }
 
 func (ks *KeyStoreService) Reload(ctx context.Context, protocol string) error {

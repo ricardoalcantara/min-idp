@@ -238,7 +238,7 @@ func (c *AuthnController) mintToken(ctx *gin.Context, userID uint, userUUID, ses
 		return "", err
 	}
 
-	return MintSessionJWT(key, meta.KID, meta.Algorithm, c.cfg.ExternalURL,
+	return MintSessionJWT(key, SigningConfig{KID: meta.KID, Issuer: c.cfg.ExternalURL},
 		userID, userUUID, sessionUUID, email, roles, time.Until(expiresAt))
 }
 

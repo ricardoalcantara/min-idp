@@ -24,15 +24,133 @@ const LoginStateCookie = "min_idp_login_state"
 
 var loginTmpl = template.Must(template.New("login").Parse(`<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Sign in</title></head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in — min-idp</title>
+  <style>
+    :root {
+      --bg:         #f5f7fa;
+      --card:       #ffffff;
+      --shadow:     0 4px 24px rgba(0,0,0,.08);
+      --text:       #111827;
+      --sub:        #6b7280;
+      --label:      #374151;
+      --border:     #d1d5db;
+      --input-bg:   #ffffff;
+      --input-text: #111827;
+      --error-bg:   #fef2f2;
+      --error-bd:   #fecaca;
+      --error-tx:   #dc2626;
+      --toggle-bg:  #e5e7eb;
+      --toggle-ico: "🌙";
+    }
+    :root:has(#dark-toggle:checked) {
+      --bg:         #0f1117;
+      --card:       #1a1d27;
+      --shadow:     0 4px 24px rgba(0,0,0,.4);
+      --text:       #f3f4f6;
+      --sub:        #9ca3af;
+      --label:      #d1d5db;
+      --border:     #374151;
+      --input-bg:   #111827;
+      --input-text: #f3f4f6;
+      --error-bg:   #2d1515;
+      --error-bd:   #7f1d1d;
+      --error-tx:   #fca5a5;
+      --toggle-bg:  #374151;
+      --toggle-ico: "☀️";
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      transition: background .25s, color .25s;
+    }
+    #dark-toggle { display: none; }
+    .toggle-btn {
+      position: fixed; top: 16px; right: 16px;
+      width: 38px; height: 38px;
+      background: var(--toggle-bg);
+      border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; transition: background .25s;
+      user-select: none;
+    }
+    .toggle-btn::after { content: var(--toggle-ico); }
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 40px 36px;
+      width: 100%; max-width: 400px;
+      transition: background .25s, box-shadow .25s;
+    }
+    .logo {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 700; font-size: 18px;
+      margin: 0 auto 20px;
+    }
+    h1 { text-align: center; font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+    .sub { text-align: center; font-size: 14px; color: var(--sub); margin-bottom: 28px; }
+    .field-label {
+      display: block; font-size: 13px; font-weight: 500;
+      color: var(--label); margin-bottom: 6px;
+    }
+    input[type=email], input[type=password] {
+      width: 100%; padding: 10px 12px;
+      background: var(--input-bg); color: var(--input-text);
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 15px; outline: none;
+      transition: border-color .2s, background .25s, color .25s;
+      margin-bottom: 16px;
+    }
+    input[type=email]:focus, input[type=password]:focus { border-color: #4f46e5; }
+    .error {
+      background: var(--error-bg); border: 1px solid var(--error-bd);
+      color: var(--error-tx); border-radius: 8px;
+      padding: 10px 12px; font-size: 13px; margin-bottom: 16px;
+    }
+    .submit-btn {
+      width: 100%; padding: 11px;
+      background: #4f46e5; color: #fff;
+      border: none; border-radius: 8px;
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      transition: background .2s;
+    }
+    .submit-btn:hover { background: #4338ca; }
+  </style>
+</head>
 <body>
-  <form method="POST" action="/api/auth/login">
-    <input type="hidden" name="state" value="{{.State}}">
-    <label>Email<br><input type="email" name="email" required autofocus></label><br>
-    <label>Password<br><input type="password" name="password" required></label><br>
-    {{if .Error}}<p style="color:red">{{.Error}}</p>{{end}}
-    <button type="submit">Sign in</button>
-  </form>
+  <input type="checkbox" id="dark-toggle" onchange="localStorage.setItem('theme',this.checked?'dark':'light')">
+  <label class="toggle-btn" for="dark-toggle"></label>
+  <script>
+    (function(){
+      var s=localStorage.getItem('theme');
+      var d=s?s==='dark':window.matchMedia('(prefers-color-scheme:dark)').matches;
+      if(d)document.getElementById('dark-toggle').checked=true;
+    })();
+  </script>
+  <div class="card">
+    <div class="logo">M</div>
+    <h1>Welcome back</h1>
+    <p class="sub">Sign in to continue</p>
+    {{if .Error}}<div class="error">{{.Error}}</div>{{end}}
+    <form method="POST" action="/api/auth/login">
+      <input type="hidden" name="next" value="{{.Next}}">
+      <label class="field-label" for="email">Email</label>
+      <input id="email" type="email" name="email" placeholder="you@example.com" required autofocus>
+      <label class="field-label" for="password">Password</label>
+      <input id="password" type="password" name="password" placeholder="••••••••" required>
+      <button class="submit-btn" type="submit">Sign in</button>
+    </form>
+  </div>
 </body>
 </html>`))
 
@@ -84,9 +202,8 @@ func NewAuthnController(
 }
 
 func (c *AuthnController) loginPage(ctx *gin.Context) {
-	state := ctx.Query("state")
 	ctx.Header("Content-Type", "text/html; charset=utf-8")
-	_ = loginTmpl.Execute(ctx.Writer, map[string]string{"State": state, "Error": ""})
+	_ = loginTmpl.Execute(ctx.Writer, map[string]string{"Next": ctx.Query("next"), "Error": ""})
 }
 
 func (c *AuthnController) infoPage(ctx *gin.Context) {
@@ -165,12 +282,12 @@ func (c *AuthnController) login(ctx *gin.Context) {
 func (c *AuthnController) loginForm(ctx *gin.Context) {
 	email := ctx.PostForm("email")
 	password := ctx.PostForm("password")
-	state := ctx.PostForm("state")
+	next := ctx.PostForm("next")
 
 	renderLoginError := func(status int, msg string) {
 		ctx.Status(status)
 		ctx.Header("Content-Type", "text/html; charset=utf-8")
-		_ = loginTmpl.Execute(ctx.Writer, map[string]string{"State": state, "Error": msg})
+		_ = loginTmpl.Execute(ctx.Writer, map[string]string{"Next": next, "Error": msg})
 	}
 
 	u, err := c.service.Authenticate(email, password)
@@ -204,11 +321,8 @@ func (c *AuthnController) loginForm(ctx *gin.Context) {
 	ctx.SetCookie(c.cfg.SessionCookie, encrypted, int(c.cfg.SessionTTL/time.Second), "/", "", ctx.Request.TLS != nil, true)
 
 	redirectURL := "/info"
-	if state != "" {
-		if val, err := c.kv.Get(ctx.Request.Context(), "login_state:"+state); err == nil && len(val) > 0 {
-			redirectURL = string(val)
-			_ = c.kv.Delete(ctx.Request.Context(), "login_state:"+state)
-		}
+	if next := ctx.PostForm("next"); strings.HasPrefix(next, "/oauth2/") || strings.HasPrefix(next, "/saml/") {
+		redirectURL = next
 	}
 	ctx.Redirect(http.StatusSeeOther, redirectURL)
 }

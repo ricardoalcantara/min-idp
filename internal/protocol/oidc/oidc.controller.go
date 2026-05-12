@@ -8,11 +8,9 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-minstack/web"
-	"github.com/google/uuid"
 	"github.com/ricardoalcantara/min-idp/internal/config"
 	localcrypto "github.com/ricardoalcantara/min-idp/internal/crypto"
 	"github.com/ricardoalcantara/min-idp/internal/keystore"
@@ -126,9 +124,7 @@ func (c *OIDCController) authorize(ctx *gin.Context) {
 }
 
 func (c *OIDCController) stashAndRedirectToLogin(ctx *gin.Context, returnURL string) {
-	stateUUID := uuid.NewString()
-	_ = c.kv.Set(ctx.Request.Context(), "login_state:"+stateUUID, []byte(returnURL), 10*time.Minute)
-	ctx.Redirect(http.StatusFound, "/login?state="+stateUUID)
+	ctx.Redirect(http.StatusFound, "/login?next="+url.QueryEscape(returnURL))
 }
 
 func (c *OIDCController) redirectError(ctx *gin.Context, redirectURI, errCode, state string) {

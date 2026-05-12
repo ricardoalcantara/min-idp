@@ -2,15 +2,14 @@ package sp
 
 import (
 	"github.com/go-minstack/core"
+	rbac_repositories "github.com/ricardoalcantara/min-idp/internal/rbac/repositories"
 	sp_repositories "github.com/ricardoalcantara/min-idp/internal/sp/repositories"
-	"go.uber.org/fx"
 )
 
 func Register(app *core.App) {
-	app.Provide(fx.Annotate(
-		sp_repositories.NewSPRepository,
-		fx.As(new(SPRepository)),
-	))
+	app.Use(core.ProvideAs[SPRepository](sp_repositories.NewSPRepository))
+	app.Use(core.ProvideAs[RBACGateRepository](rbac_repositories.NewRBACRepository))
 	app.Provide(NewSPService)
+	app.Provide(NewSPGateService)
 	app.Provide(NewSPController)
 }

@@ -1,0 +1,28 @@
+info:
+  name: Token
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth2/token"
+  auth: none
+  body:
+    type: form-urlencoded
+    data:
+      - name: grant_type
+        value: authorization_code
+      - name: code
+        value: "{{oidcCode}}"
+      - name: client_id
+        value: "{{oidcClientId}}"
+      - name: client_secret
+        value: "{{oidcClientSecret}}"
+      - name: redirect_uri
+        value: "{{oidcRedirectUri}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

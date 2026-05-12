@@ -1,0 +1,20 @@
+info:
+  name: Revoke
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth2/revoke"
+  auth: none
+  body:
+    type: form-urlencoded
+    data:
+      - name: token
+        value: "{{oidcAccessToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

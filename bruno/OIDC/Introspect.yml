@@ -1,0 +1,20 @@
+info:
+  name: Introspect
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{baseUrl}}/oauth2/introspect"
+  auth: none
+  body:
+    type: form-urlencoded
+    data:
+      - name: token
+        value: "{{oidcAccessToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

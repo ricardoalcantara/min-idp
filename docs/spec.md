@@ -55,7 +55,7 @@ extensions/                 # future plug-ins (smtp, ldap, totp, federation)
 
 ## 4. Data Model
 
-Core tables. All timestamps are UTC. All IDs are ULIDs unless otherwise noted.
+Core tables. All timestamps are UTC. All IDs are UUIDs unless otherwise noted.
 
 ```
 users

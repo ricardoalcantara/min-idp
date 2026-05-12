@@ -134,3 +134,21 @@ func (r *RBACRepository) GetUserPermissions(userID uint) ([]string, error) {
 		Pluck("name", &names).Error
 	return names, err
 }
+
+// GetSubjectIDsForUser returns the subjects.id values for every principal the
+// user belongs to: their own user-subject, all role-subjects, all group-subjects.
+// Used by the SSO gate to match access_rules.subject_id in one query.
+func (r *RBACRepository) GetSubjectIDsForUser(userID uint) ([]uint, error) {
+	var ids []uint
+	err := r.db.Raw(`
+		SELECT s.id FROM subjects s
+		WHERE (s.type = 'user' AND s.entity_id = ?)
+		   OR (s.type = 'role' AND s.entity_id IN (
+		           SELECT role_id FROM user_roles WHERE user_id = ?
+		       ))
+		   OR (s.type = 'group' AND s.entity_id IN (
+		           SELECT group_id FROM user_groups WHERE user_id = ?
+		       ))
+	`, userID, userID, userID).Scan(&ids).Error
+	return ids, err
+}

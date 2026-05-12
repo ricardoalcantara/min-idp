@@ -12,7 +12,7 @@ http:
       {
         "client_id": "my-app-client",
         "client_secret": "super-secret",
-        "redirect_uris": ["https://app.example.com/callback"],
+        "redirect_uris": ["http://localhost:3000/api/auth/callback/min-idp"],
         "grant_types": ["authorization_code"],
         "response_types": ["code"],
         "scopes": ["openid", "email", "profile"],

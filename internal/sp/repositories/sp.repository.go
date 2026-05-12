@@ -28,6 +28,14 @@ func (r *SPRepository) FindByUUID(uuid string) (*sp_entities.ServiceProvider, er
 	return s, err
 }
 
+func (r *SPRepository) FindByID(id uint) (*sp_entities.ServiceProvider, error) {
+	s, err := r.FindOne(repository.Where("id = ?", id))
+	if errors.Is(err, gormdb.ErrRecordNotFound) {
+		return nil, dbpkg.ErrEntityNotFound
+	}
+	return s, err
+}
+
 func (r *SPRepository) FindBySlug(slug string) (*sp_entities.ServiceProvider, error) {
 	s, err := r.FindOne(repository.Where("slug = ?", slug))
 	if errors.Is(err, gormdb.ErrRecordNotFound) {
@@ -45,6 +53,15 @@ func (r *SPRepository) Delete(id uint) error {
 }
 
 // --- OIDC Client ---
+
+func (r *SPRepository) FindOIDCClientByClientID(clientID string) (*sp_entities.OIDCClient, error) {
+	var c sp_entities.OIDCClient
+	err := r.db.Where("client_id = ?", clientID).First(&c).Error
+	if errors.Is(err, gormdb.ErrRecordNotFound) {
+		return nil, dbpkg.ErrEntityNotFound
+	}
+	return &c, err
+}
 
 func (r *SPRepository) GetOIDCClient(spID uint) (*sp_entities.OIDCClient, error) {
 	var c sp_entities.OIDCClient

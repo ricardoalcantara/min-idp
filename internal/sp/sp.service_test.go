@@ -25,11 +25,13 @@ func (m *mockSPRepo) Update(_ *sp_entities.ServiceProvider) error               
 func (m *mockSPRepo) Delete(_ uint) error                                        { return m.err }
 func (m *mockSPRepo) FindByUUID(_ string) (*sp_entities.ServiceProvider, error)  { return m.sp, m.err }
 func (m *mockSPRepo) FindBySlug(_ string) (*sp_entities.ServiceProvider, error)  { return m.sp, m.err }
+func (m *mockSPRepo) FindByID(_ uint) (*sp_entities.ServiceProvider, error)  { return m.sp, m.err }
 func (m *mockSPRepo) FindAll(_ ...repository.QueryOption) ([]sp_entities.ServiceProvider, error) {
 	return m.sps, m.err
 }
 
 func (m *mockSPRepo) GetOIDCClient(_ uint) (*sp_entities.OIDCClient, error)               { return nil, m.err }
+func (m *mockSPRepo) FindOIDCClientByClientID(_ string) (*sp_entities.OIDCClient, error)               { return nil, m.err }
 func (m *mockSPRepo) UpsertOIDCClient(_ *sp_entities.OIDCClient) error                     { return m.err }
 func (m *mockSPRepo) GetSAMLClient(_ uint) (*sp_entities.SAMLClient, error)               { return nil, m.err }
 func (m *mockSPRepo) UpsertSAMLClient(_ *sp_entities.SAMLClient) error                     { return m.err }

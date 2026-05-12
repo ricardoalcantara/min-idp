@@ -60,7 +60,7 @@ func (s *UserService) FindByEmail(email string) (*user_entities.User, error) {
 func (s *UserService) Authenticate(email, password string) (*user_entities.User, error) {
 	u, err := s.repo.FindByEmail(email)
 	if err != nil {
-		if err == db.ErrEntityNotFound {
+		if errors.Is(err, db.ErrEntityNotFound) {
 			return nil, ErrInvalidCredentials
 		}
 		return nil, err

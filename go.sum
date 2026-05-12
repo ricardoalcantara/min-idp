@@ -28,8 +28,8 @@ github.com/glebarez/go-sqlite v1.21.2 h1:3a6LFC4sKahUunAmynQKLZceZCOzUthkRkEAl9g
 github.com/glebarez/go-sqlite v1.21.2/go.mod h1:sfxdZyhQjTM2Wry3gVYWaW072Ri1WMdWJi0k6+3382k=
 github.com/glebarez/sqlite v1.11.0 h1:wSG0irqzP6VurnMEpFGer5Li19RpIRi2qvQz++w0GMw=
 github.com/glebarez/sqlite v1.11.0/go.mod h1:h8/o8j5wiAsqSPoWELDUdJXhjAhsVliSn7bWZjOhrgQ=
-github.com/go-minstack/core v0.1.0 h1:dLWAUK58PTBHfwjazpq6BRva/bFTLxmCyqDH8/qONAM=
-github.com/go-minstack/core v0.1.0/go.mod h1:cFBOs8UPj8RNiZLZBCmdcThyJaTSc/tsmEUGrijaB0A=
+github.com/go-minstack/core v0.1.1 h1:od+Ebu9l/lWtsTi2K7nIhrMBRyOdc5m8wHdLnqc0geU=
+github.com/go-minstack/core v0.1.1/go.mod h1:cFBOs8UPj8RNiZLZBCmdcThyJaTSc/tsmEUGrijaB0A=
 github.com/go-minstack/gin v0.2.2 h1:eE81PCkRnYZfCWSfzOaStgIO34Uuw09x2nrEsrEswVc=
 github.com/go-minstack/gin v0.2.2/go.mod h1:RhA5CICr4Z8aWR18lGJbpTAgvqBV7TDxbz7oOy9LqHc=
 github.com/go-minstack/logger v0.1.0 h1:tmaL+jV+ttYkavKCWSIOlkVv7L1cTiDESs1cu8AsD8Q=

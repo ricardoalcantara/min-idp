@@ -18,10 +18,12 @@ type SPRepository interface {
 	Create(sp *sp_entities.ServiceProvider) error
 	FindByUUID(uuid string) (*sp_entities.ServiceProvider, error)
 	FindBySlug(slug string) (*sp_entities.ServiceProvider, error)
+	FindByID(id uint) (*sp_entities.ServiceProvider, error)
 	FindAll(opts ...repository.QueryOption) ([]sp_entities.ServiceProvider, error)
 	Update(sp *sp_entities.ServiceProvider) error
 	Delete(id uint) error
 	GetOIDCClient(spID uint) (*sp_entities.OIDCClient, error)
+	FindOIDCClientByClientID(clientID string) (*sp_entities.OIDCClient, error)
 	UpsertOIDCClient(c *sp_entities.OIDCClient) error
 	GetSAMLClient(spID uint) (*sp_entities.SAMLClient, error)
 	UpsertSAMLClient(c *sp_entities.SAMLClient) error

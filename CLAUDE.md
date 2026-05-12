@@ -5,6 +5,12 @@ It is updated every time a new pattern is established or adjusted.
 
 ---
 
+## Architectural Goals
+
+- **Minimum Effort Setup**: The IDP should default to the easiest possible configuration for administrators while remaining secure. For example, if a user is granted global access to a feature (e.g., `sp:login`) and no fine-grained access rules are configured for a specific application, the system should default to allowing access rather than denying it.
+
+---
+
 ## Git
 
 - **Never add `Co-Authored-By` trailers to commit messages.**

@@ -84,7 +84,7 @@ func NewAuthnController(
 }
 
 func (c *AuthnController) loginPage(ctx *gin.Context) {
-	state, _ := ctx.Cookie(LoginStateCookie)
+	state := ctx.Query("state")
 	ctx.Header("Content-Type", "text/html; charset=utf-8")
 	_ = loginTmpl.Execute(ctx.Writer, map[string]string{"State": state, "Error": ""})
 }

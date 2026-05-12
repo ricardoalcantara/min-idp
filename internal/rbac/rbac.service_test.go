@@ -35,6 +35,7 @@ func (m *mockRBACRepo) RemoveRoleFromUser(_, _ uint) error                      
 func (m *mockRBACRepo) GetRolesByUser(_ uint) ([]rbac_entities.Role, error)            { return nil, m.err }
 func (m *mockRBACRepo) UserHasPermission(_ uint, _ string) (bool, error)              { return m.hasPerm, m.err }
 func (m *mockRBACRepo) GetUserPermissions(_ uint) ([]string, error)                   { return nil, m.err }
+func (m *mockRBACRepo) GetSubjectIDsForUser(_ uint) ([]uint, error)                   { return nil, m.err }
 
 func newTestRBACSvc(repo RBACRepository) *RBACService {
 	return NewRBACService(repo)

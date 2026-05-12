@@ -147,6 +147,29 @@ CREATE TABLE IF NOT EXISTS saml_clients (
 );
 CREATE INDEX IF NOT EXISTS idx_saml_clients_deleted_at ON saml_clients(deleted_at);
 
+CREATE TABLE IF NOT EXISTS oauth_tokens (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at   DATETIME,
+    updated_at   DATETIME,
+    deleted_at   DATETIME,
+    uuid         TEXT NOT NULL UNIQUE,
+    type         TEXT NOT NULL,
+    token_hash   TEXT NOT NULL UNIQUE,
+    client_id    TEXT NOT NULL,
+    user_id      INTEGER NOT NULL,
+    session_uuid TEXT,
+    scope        TEXT,
+    expires_at   DATETIME,
+    revoked_at   DATETIME,
+    parent_id    INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_oauth_tokens_deleted_at ON oauth_tokens(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_oauth_tokens_type ON oauth_tokens(type);
+CREATE INDEX IF NOT EXISTS idx_oauth_tokens_client_id ON oauth_tokens(client_id);
+CREATE INDEX IF NOT EXISTS idx_oauth_tokens_user_id ON oauth_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_oauth_tokens_session_uuid ON oauth_tokens(session_uuid);
+CREATE INDEX IF NOT EXISTS idx_oauth_tokens_expires_at ON oauth_tokens(expires_at);
+
 CREATE TABLE IF NOT EXISTS access_rules (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at   DATETIME,
@@ -220,6 +243,7 @@ DROP TABLE IF EXISTS signing_keys;
 DROP TABLE IF EXISTS access_rules;
 DROP TABLE IF EXISTS subjects;
 DROP TABLE IF EXISTS saml_clients;
+DROP TABLE IF EXISTS oauth_tokens;
 DROP TABLE IF EXISTS oidc_clients;
 DROP TABLE IF EXISTS service_providers;
 DROP TABLE IF EXISTS sp_sessions;

@@ -6,7 +6,7 @@ require (
 	github.com/caarlos0/env/v11 v11.4.1
 	github.com/gin-gonic/gin v1.12.0
 	github.com/glebarez/sqlite v1.11.0
-	github.com/go-minstack/core v0.1.0
+	github.com/go-minstack/core v0.1.1
 	github.com/go-minstack/gin v0.2.2
 	github.com/go-minstack/migration v0.1.0
 	github.com/go-minstack/repository v0.1.0

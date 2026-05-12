@@ -2,6 +2,7 @@ package keystore_repositories
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/go-minstack/repository"
@@ -22,7 +23,7 @@ func NewKeyRepository(d *gormdb.DB) *KeyRepository {
 func (r *KeyRepository) GetActive(ctx context.Context, protocol string) (*keystore_entities.SigningKey, error) {
 	key, err := r.FindOne(repository.Where("protocol = ? AND status = ?", protocol, keystore_entities.StatusActive))
 	if err != nil {
-		if err == gormdb.ErrRecordNotFound {
+		if errors.Is(err, gormdb.ErrRecordNotFound) {
 			return nil, db.ErrEntityNotFound
 		}
 		return nil, err

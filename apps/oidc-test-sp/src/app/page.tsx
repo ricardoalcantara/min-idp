@@ -1,130 +1,129 @@
-import { auth, signIn, signOut, buildLogoutUrl } from "@/auth";
-import { headers } from "next/headers";
+import { auth, signIn, signOut, buildLogoutUrl } from "@/auth"
+import { headers } from "next/headers"
+
+const S = {
+  page:      { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" } as React.CSSProperties,
+  wrap:      { width: "100%", maxWidth: "680px" } as React.CSSProperties,
+  header:    { textAlign: "center" as const, marginBottom: "2.5rem" },
+  logo:      { width: 44, height: 44, background: "linear-gradient(135deg,#4f46e5,#7c3aed)", borderRadius: 10, display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 18, marginBottom: "1.25rem" } as React.CSSProperties,
+  h1:        { fontSize: "1.75rem", fontWeight: 700, marginBottom: "0.375rem" } as React.CSSProperties,
+  sub:       { fontSize: "0.875rem", color: "var(--muted)" } as React.CSSProperties,
+  card:      { background: "var(--card)", border: "1px solid var(--card-border)", borderRadius: 14, boxShadow: "0 2px 12px rgba(0,0,0,.06)", overflow: "hidden", marginBottom: "1rem" } as React.CSSProperties,
+  ch:        { background: "var(--card-header)", borderBottom: "1px solid var(--card-border)", padding: "0.75rem 1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between" } as React.CSSProperties,
+  label:     { fontSize: "0.7rem", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.05em", color: "var(--muted)" },
+  badge:     (color: string) => ({ fontSize: "0.7rem", padding: "0.2rem 0.6rem", borderRadius: 99, background: `rgba(${color},.1)`, color: `rgb(${color})`, fontWeight: 500 } as React.CSSProperties),
+  pre:       (bg: string, fg: string) => ({ padding: "1.25rem", fontSize: "0.75rem", fontFamily: "monospace", overflow: "auto", background: `var(${bg})`, color: `var(${fg})`, whiteSpace: "pre-wrap" as const, wordBreak: "break-all" as const }),
+  status:    { background: "var(--card)", border: "1px solid var(--card-border)", borderRadius: 14, padding: "1rem 1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" } as React.CSSProperties,
+  dot:       { width: 10, height: 10, borderRadius: "50%", background: "#10b981", boxShadow: "0 0 0 4px var(--status-ring)", marginRight: "0.75rem", flexShrink: 0 } as React.CSSProperties,
+  loginBtn:  { display: "inline-flex", alignItems: "center", gap: "0.5rem", padding: "0.625rem 1.5rem", background: "#4f46e5", color: "#fff", border: "none", borderRadius: 8, fontSize: "0.9rem", fontWeight: 600, cursor: "pointer" } as React.CSSProperties,
+  logoutBtn: { padding: "0.5rem 1rem", background: "var(--card-border)", color: "var(--text)", border: "none", borderRadius: 8, fontSize: "0.875rem", fontWeight: 500, cursor: "pointer" } as React.CSSProperties,
+  toggle:    { position: "fixed" as const, top: 16, right: 16, width: 36, height: 36, borderRadius: "50%", background: "var(--card-border)", border: "none", cursor: "pointer", fontSize: 18 },
+  grid:      { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: "1rem" } as React.CSSProperties,
+}
 
 export default async function Home() {
-  const session = await auth();
-  const hdrs = await headers();
-  const baseUrl = `${hdrs.get("x-forwarded-proto") ?? "http"}://${hdrs.get("host") ?? "localhost:3000"}`;
-
-  const card = {
-    background: "var(--card)",
-    border: "1px solid var(--card-border)",
-  } as React.CSSProperties;
-
-  const cardHeader = {
-    background: "var(--card-header)",
-    borderBottom: "1px solid var(--card-border)",
-  } as React.CSSProperties;
+  const session = await auth()
+  const hdrs = await headers()
+  const baseUrl = `${hdrs.get("x-forwarded-proto") ?? "http"}://${hdrs.get("host") ?? "localhost:3001"}`
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="max-w-3xl w-full">
+    <div style={S.page}>
+      <div style={S.wrap}>
+        <button style={S.toggle} id="dark-toggle" suppressHydrationWarning>🌙</button>
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(){
+            var btn=document.getElementById('dark-toggle');
+            var s=localStorage.getItem('theme');
+            var d=s?s==='dark':matchMedia('(prefers-color-scheme:dark)').matches;
+            if(d){document.documentElement.classList.add('dark');btn.textContent='☀️';}
+            btn.addEventListener('click',function(){
+              var now=document.documentElement.classList.toggle('dark');
+              localStorage.setItem('theme',now?'dark':'light');
+              btn.textContent=now?'☀️':'🌙';
+            });
+          })();
+        ` }} />
 
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-600 rounded-xl mb-5 shadow-sm">
-            <span className="text-white font-bold text-lg">M</span>
-          </div>
-          <h1 className="text-3xl font-bold mb-2">Min-IDP Tester</h1>
-          <p className="text-sm" style={{ color: "var(--muted)" }}>OIDC · PKCE · State · Nonce</p>
+        <div style={S.header}>
+          <div style={S.logo}>O</div>
+          <h1 style={S.h1}>OIDC Test SP</h1>
+          <p style={S.sub}>OIDC · PKCE · State · Nonce</p>
         </div>
 
         {!session ? (
-          <div className="rounded-2xl shadow-sm p-8 text-center" style={card}>
-            <h2 className="text-lg font-semibold mb-2">Sign in to continue</h2>
-            <p className="text-sm mb-6" style={{ color: "var(--muted)" }}>Authenticate via Min-IDP to inspect your tokens.</p>
-            <form
-              action={async () => {
-                "use server"
-                await signIn("min-idp")
-              }}
-            >
-              <button
-                type="submit"
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div style={{ ...S.card, textAlign: "center", padding: "2.5rem 2rem" }}>
+            <p style={{ marginBottom: "0.5rem", fontWeight: 600 }}>Sign in to continue</p>
+            <p style={{ ...S.sub, marginBottom: "1.5rem" }}>Authenticate via OIDC to inspect your tokens.</p>
+            <form action={async () => { "use server"; await signIn("min-idp") }}>
+              <button type="submit" style={S.loginBtn}>
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                 </svg>
-                Sign in with Min-IDP
+                Sign in with OIDC
               </button>
             </form>
           </div>
         ) : (
-          <div className="space-y-4">
-            {/* Status bar */}
-            <div className="rounded-2xl shadow-sm p-5 flex items-center justify-between" style={card}>
-              <div className="flex items-center gap-3">
-                <span className="inline-flex w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4" style={{ boxShadow: "0 0 0 4px var(--status-ring)" }} />
+          <>
+            <div style={S.status}>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <span style={S.dot} />
                 <div>
-                  <p className="text-sm font-semibold">Authenticated</p>
-                  <p className="text-xs" style={{ color: "var(--muted)" }}>{session.user?.email}</p>
+                  <div style={{ fontWeight: 600, fontSize: "0.9rem" }}>Authenticated</div>
+                  <div style={{ ...S.sub, fontSize: "0.8rem" }}>{session.user?.email}</div>
                 </div>
               </div>
-              <form
-                action={async () => {
-                  "use server"
-                  // @ts-expect-error Session property extension
-                  const idToken = session?.idToken as string | undefined
-                  if (idToken) {
-                    await signOut({ redirect: false })
-                    const logoutUrl = buildLogoutUrl(idToken, baseUrl)
-                    const { redirect } = await import("next/navigation")
-                    redirect(logoutUrl)
-                  } else {
-                    await signOut()
-                  }
-                }}
-              >
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-                  style={{ background: "var(--card-border)", color: "var(--foreground)" }}
-                >
-                  Sign out
-                </button>
+              <form action={async () => {
+                "use server"
+                // @ts-expect-error Session property extension
+                const idToken = session?.idToken as string | undefined
+                if (idToken) {
+                  await signOut({ redirect: false })
+                  const logoutUrl = await buildLogoutUrl(idToken, baseUrl)
+                  const { redirect } = await import("next/navigation")
+                  redirect(logoutUrl)
+                } else {
+                  await signOut()
+                }
+              }}>
+                <button type="submit" style={S.logoutBtn}>Sign out</button>
               </form>
             </div>
 
-            {/* ID Token */}
-            <div className="rounded-2xl shadow-sm overflow-hidden" style={card}>
-              <div className="flex items-center justify-between px-5 py-3" style={cardHeader}>
-                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--muted)" }}>ID Token</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-600 font-medium">JWT</span>
+            <div style={S.card}>
+              <div style={S.ch}>
+                <span style={S.label}>ID Token</span>
+                <span style={S.badge("99,102,241")}>JWT</span>
               </div>
-              <pre className="p-5 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-all"
-                style={{ background: "var(--code-indigo-bg)", color: "var(--code-indigo-text)" }}>
+              <pre style={S.pre("--code-bg", "--code-text")}>
                 {/* @ts-expect-error Session property extension */}
                 {session?.idToken || "No ID Token returned"}
               </pre>
             </div>
 
-            {/* Profile + Access Token */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="rounded-2xl shadow-sm overflow-hidden" style={card}>
-                <div className="px-5 py-3" style={cardHeader}>
-                  <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--muted)" }}>Session Profile</span>
+            <div style={S.grid}>
+              <div style={S.card}>
+                <div style={S.ch}>
+                  <span style={S.label}>Session Profile</span>
                 </div>
-                <pre className="p-5 text-xs font-mono overflow-x-auto"
-                  style={{ background: "var(--code-emerald-bg)", color: "var(--code-emerald-text)" }}>
+                <pre style={S.pre("--attr-bg", "--attr-text")}>
                   {JSON.stringify(session?.user, null, 2)}
                 </pre>
               </div>
 
-              <div className="rounded-2xl shadow-sm overflow-hidden" style={card}>
-                <div className="px-5 py-3" style={cardHeader}>
-                  <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--muted)" }}>Access Token</span>
+              <div style={S.card}>
+                <div style={S.ch}>
+                  <span style={S.label}>Access Token</span>
                 </div>
-                <pre className="p-5 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-all"
-                  style={{ background: "var(--code-amber-bg)", color: "var(--code-amber-text)" }}>
+                <pre style={S.pre("--amber-bg", "--amber-text")}>
                   {/* @ts-expect-error Session property extension */}
                   {session?.accessToken || "No Access Token returned"}
                 </pre>
               </div>
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>
-  );
+  )
 }

@@ -12,10 +12,21 @@ http:
       {
         "client_id": "my-app-client",
         "client_secret": "super-secret",
-        "redirect_uris": ["http://localhost:3000/api/auth/callback/min-idp"],
-        "grant_types": ["authorization_code"],
-        "response_types": ["code"],
-        "scopes": ["openid", "email", "profile"],
+        "redirect_uris": [
+          "http://localhost:3000/api/auth/callback/min-idp",
+          "http://localhost:3001/api/auth/callback/min-idp"
+        ],
+        "grant_types": [
+          "authorization_code"
+        ],
+        "response_types": [
+          "code"
+        ],
+        "scopes": [
+          "openid",
+          "email",
+          "profile"
+        ],
         "token_endpoint_auth": "client_secret_basic",
         "pkce_required": true
       }

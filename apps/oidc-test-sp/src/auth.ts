@@ -21,14 +21,34 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token_endpoint_auth_method: "client_secret_basic",
       },
       checks: ["pkce", "state", "nonce"],
+      profile(profile) {
+        // profile comes from the userinfo endpoint or ID token claims.
+        // email is in both (we embed it when minting the session JWT).
+        return {
+          id:    profile.sub,
+          email: profile.email ?? null,
+          name:  profile.name  ?? profile.email ?? profile.sub,
+        }
+      },
     },
   ],
   callbacks: {
     async jwt({ token, account }) {
       if (account) {
-        token.idToken = account.id_token
-        token.accessToken = account.access_token
+        token.idToken           = account.id_token
+        token.accessToken       = account.access_token
         token.providerAccountId = account.providerAccountId
+
+        // Extract email from the ID token claims directly — no userinfo round-trip needed.
+        if (account.id_token) {
+          try {
+            const payload = JSON.parse(
+              Buffer.from(account.id_token.split(".")[1], "base64url").toString()
+            )
+            token.email = payload.email ?? token.email
+            token.name  = payload.email ?? token.name
+          } catch { /* ignore decode errors */ }
+        }
       }
       return token
     },
@@ -43,13 +63,32 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
 })
 
+// Cache the discovery document in memory for the process lifetime.
+let _discovery: Record<string, string> | null = null
+
+async function getDiscovery(): Promise<Record<string, string>> {
+  if (_discovery) return _discovery
+  const res = await fetch(`${issuer}/.well-known/openid-configuration`, {
+    next: { revalidate: 3600 },
+  })
+  if (!res.ok) throw new Error(`OIDC discovery failed: ${res.status}`)
+  _discovery = await res.json()
+  return _discovery!
+}
+
 /**
- * Returns the IdP end_session URL for RP-initiated logout.
- * Passes id_token_hint so the IdP knows which session to terminate.
+ * Builds the RP-initiated logout URL using end_session_endpoint from
+ * the provider's discovery document — works with any OIDC provider.
  */
-export function buildLogoutUrl(idToken: string, baseUrl: string): string {
-  const endSession = new URL(`${issuer}/oauth2/logout`)
-  endSession.searchParams.set("id_token_hint", idToken)
-  endSession.searchParams.set("post_logout_redirect_uri", baseUrl)
-  return endSession.toString()
+export async function buildLogoutUrl(idToken: string, baseUrl: string): Promise<string> {
+  const discovery = await getDiscovery()
+  const endSessionEndpoint = discovery["end_session_endpoint"]
+  if (!endSessionEndpoint) {
+    // Provider doesn't advertise end_session_endpoint — fall back to local signout only.
+    return baseUrl
+  }
+  const url = new URL(endSessionEndpoint)
+  url.searchParams.set("id_token_hint", idToken)
+  url.searchParams.set("post_logout_redirect_uri", baseUrl)
+  return url.toString()
 }

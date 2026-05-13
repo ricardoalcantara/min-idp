@@ -1,4 +1,4 @@
-min-idp
+/min-idp
 *.db
 *.db-wal
 *.db-shm

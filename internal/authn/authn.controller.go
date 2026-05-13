@@ -52,6 +52,11 @@ func NewAuthnController(
 	}
 }
 
+func (c *AuthnController) landingPage(ctx *gin.Context) {
+	ctx.Header("Content-Type", "text/html; charset=utf-8")
+	_ = views.LandingTmpl.Execute(ctx.Writer, nil)
+}
+
 func (c *AuthnController) loginPage(ctx *gin.Context) {
 	ctx.Header("Content-Type", "text/html; charset=utf-8")
 	_ = views.LoginTmpl.Execute(ctx.Writer, map[string]string{"Next": ctx.Query("next"), "Error": ""})
@@ -61,17 +66,17 @@ func (c *AuthnController) infoPage(ctx *gin.Context) {
 	ctx.Header("Content-Type", "text/html; charset=utf-8")
 	cookie, err := ctx.Cookie(c.cfg.SessionCookie)
 	if err != nil {
-		_ = views.InfoTmpl.Execute(ctx.Writer, map[string]interface{}{"Email": ""})
+		ctx.Redirect(http.StatusFound, "/")
 		return
 	}
 	rawJWT, err := c.cookieToken.Decode(cookie)
 	if err != nil {
-		_ = views.InfoTmpl.Execute(ctx.Writer, map[string]interface{}{"Email": ""})
+		ctx.Redirect(http.StatusFound, "/")
 		return
 	}
 	claims, err := jwtPayloadClaims(rawJWT)
 	if err != nil {
-		_ = views.InfoTmpl.Execute(ctx.Writer, map[string]interface{}{"Email": ""})
+		ctx.Redirect(http.StatusFound, "/")
 		return
 	}
 	// Convert roles []interface{} → []string for template range

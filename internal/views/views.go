@@ -9,9 +9,10 @@ import (
 var files embed.FS
 
 var (
-	LoginTmpl  = parse("login.html")
-	InfoTmpl   = parse("info.html")
-	LogoutTmpl = parse("logout.html")
+	LandingTmpl = parse("landing.html")
+	LoginTmpl   = parse("login.html")
+	InfoTmpl    = parse("info.html")
+	LogoutTmpl  = parse("logout.html")
 )
 
 func parse(name string) *template.Template {

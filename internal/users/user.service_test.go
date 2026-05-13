@@ -39,7 +39,7 @@ func newTestUserSvc(repo UserRepository) *UserService {
 
 func TestUserService_Create_Success(t *testing.T) {
 	svc := newTestUserSvc(&mockUserRepo{})
-	u, err := svc.Create("a@b.com", "secret")
+	u, err := svc.Create("a@b.com", "", "secret")
 	require.NoError(t, err)
 	assert.Equal(t, "a@b.com", u.Email)
 	assert.Equal(t, "active", u.Status)
@@ -48,7 +48,7 @@ func TestUserService_Create_Success(t *testing.T) {
 func TestUserService_Create_RepoError(t *testing.T) {
 	repoErr := errors.New("db down")
 	svc := newTestUserSvc(&mockUserRepo{err: repoErr})
-	_, err := svc.Create("a@b.com", "secret")
+	_, err := svc.Create("a@b.com", "", "secret")
 	assert.ErrorIs(t, err, repoErr)
 }
 

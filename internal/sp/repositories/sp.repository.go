@@ -134,14 +134,13 @@ func (r *SPRepository) ListAccessRules(spID uint) ([]AccessRuleRow, error) {
 		SELECT ar.*, s.type as subject_type,
 		  CASE s.type
 		    WHEN 'role'  THEN r.uuid
-		    WHEN 'group' THEN g.uuid
+		    
 		    WHEN 'user'  THEN u.uuid
 		  END as subject_uuid
 		FROM access_rules ar
 		JOIN subjects s ON ar.subject_id = s.id
-		LEFT JOIN roles  r ON s.type = 'role'  AND s.entity_id = r.id
-		LEFT JOIN groups g ON s.type = 'group' AND s.entity_id = g.id
-		LEFT JOIN users  u ON s.type = 'user'  AND s.entity_id = u.id
+		LEFT JOIN roles r ON s.type = 'role'  AND s.entity_id = r.id
+		LEFT JOIN users u ON s.type = 'user'  AND s.entity_id = u.id
 		WHERE ar.sp_id = ? AND ar.deleted_at IS NULL
 		ORDER BY ar.priority ASC`, spID).Rows()
 	if err != nil {

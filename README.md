@@ -42,6 +42,38 @@ make build
 ./min-idp
 ```
 
+## Docker
+
+A pre-built image is published to GitHub Container Registry on every release tag.
+
+```bash
+docker pull ghcr.io/ricardoalcantara/min-idp:v0.1.0-alpha
+```
+
+**`docker-compose.yml`** provides a ready-to-use stack with a persistent SQLite volume.  
+**`docker-compose.override.yml`** is the place to set secrets and environment-specific values — it is git-ignored and merged automatically by Docker Compose.
+
+```yaml
+# docker-compose.override.yml
+services:
+  min-idp:
+    environment:
+      MIN_IDP_EXTERNAL_URL: https://your-domain.example.com
+      MIN_IDP_MASTER_KEY: "your-key-here"
+```
+
+Generate a key with:
+
+```bash
+openssl rand -base64 32
+```
+
+Then start:
+
+```bash
+docker compose up -d
+```
+
 On first start, min-idp bootstraps the database and creates a default admin account:
 
 - **Email:** `admin@min-idp.local`

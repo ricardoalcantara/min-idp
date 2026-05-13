@@ -9,7 +9,7 @@ import (
 	"github.com/ricardoalcantara/min-idp/internal/session"
 )
 
-func RequirePermission(rbacSvc *RBACService, perm string) gin.HandlerFunc {
+func RequireRole(rbacSvc *RBACService, role string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		claims := session.FromContext(c)
 		if claims == nil {
@@ -17,12 +17,12 @@ func RequirePermission(rbacSvc *RBACService, perm string) gin.HandlerFunc {
 			return
 		}
 		// Fast path: check JWT claims (no DB hit)
-		if claims.HasRole(perm) {
+		if claims.HasRole(role) {
 			c.Next()
 			return
 		}
 		// Fallback: DB check (e.g. role assigned after token was issued)
-		ok, err := rbacSvc.UserHasPermission(claims.UserID, perm)
+		ok, err := rbacSvc.UserHasRole(claims.UserID, role)
 		if err != nil || !ok {
 			c.AbortWithStatusJSON(http.StatusForbidden, web.NewErrorDto(errors.New("forbidden")))
 			return

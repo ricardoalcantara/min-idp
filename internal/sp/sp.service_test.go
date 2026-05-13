@@ -33,6 +33,7 @@ func (m *mockSPRepo) FindAll(_ ...repository.QueryOption) ([]sp_entities.Service
 func (m *mockSPRepo) GetOIDCClient(_ uint) (*sp_entities.OIDCClient, error)               { return nil, m.err }
 func (m *mockSPRepo) FindOIDCClientByClientID(_ string) (*sp_entities.OIDCClient, error)               { return nil, m.err }
 func (m *mockSPRepo) UpsertOIDCClient(_ *sp_entities.OIDCClient) error                     { return m.err }
+func (m *mockSPRepo) FindSAMLClientByEntityID(_ string) (*sp_entities.SAMLClient, error) { return nil, m.err }
 func (m *mockSPRepo) GetSAMLClient(_ uint) (*sp_entities.SAMLClient, error)               { return nil, m.err }
 func (m *mockSPRepo) UpsertSAMLClient(_ *sp_entities.SAMLClient) error                     { return m.err }
 func (m *mockSPRepo) ListAccessRules(_ uint) ([]sp_repositories.AccessRuleRow, error)      { return nil, m.err }

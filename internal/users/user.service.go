@@ -16,6 +16,7 @@ type UserRepository interface {
 	FindByID(id uint) (*user_entities.User, error)
 	FindByUUID(uuid string) (*user_entities.User, error)
 	FindByEmail(email string) (*user_entities.User, error)
+	FindByUsername(username string) (*user_entities.User, error)
 	Update(u *user_entities.User) error
 	List(page, limit int) ([]*user_entities.User, int64, error)
 	Delete(id uint) error
@@ -29,13 +30,14 @@ func NewUserService(repo UserRepository) *UserService {
 	return &UserService{repo: repo}
 }
 
-func (s *UserService) Create(email, name, password string) (*user_entities.User, error) {
+func (s *UserService) Create(email, username, name, password string) (*user_entities.User, error) {
 	hash, err := crypto.HashPassword(password)
 	if err != nil {
 		return nil, err
 	}
 	u := &user_entities.User{
 		Email:        email,
+		Username:     username,
 		Name:         name,
 		PasswordHash: hash,
 		Status:       "active",
@@ -58,8 +60,11 @@ func (s *UserService) FindByEmail(email string) (*user_entities.User, error) {
 	return s.repo.FindByEmail(email)
 }
 
-func (s *UserService) Authenticate(email, password string) (*user_entities.User, error) {
-	u, err := s.repo.FindByEmail(email)
+func (s *UserService) Authenticate(login, password string) (*user_entities.User, error) {
+	u, err := s.repo.FindByEmail(login)
+	if errors.Is(err, db.ErrEntityNotFound) {
+		u, err = s.repo.FindByUsername(login)
+	}
 	if err != nil {
 		if errors.Is(err, db.ErrEntityNotFound) {
 			return nil, ErrInvalidCredentials
@@ -85,13 +90,16 @@ func (s *UserService) List(page, pageSize int) ([]*user_entities.User, int64, er
 	return s.repo.List(page, pageSize)
 }
 
-func (s *UserService) Update(uuid string, email, name, status *string) (*user_entities.User, error) {
+func (s *UserService) Update(uuid string, email, username, name, status *string) (*user_entities.User, error) {
 	u, err := s.repo.FindByUUID(uuid)
 	if err != nil {
 		return nil, err
 	}
 	if email != nil {
 		u.Email = *email
+	}
+	if username != nil {
+		u.Username = *username
 	}
 	if name != nil {
 		u.Name = *name

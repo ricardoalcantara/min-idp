@@ -10,6 +10,7 @@ import (
 	rbac_dto "github.com/ricardoalcantara/min-idp/internal/rbac/dto"
 )
 
+
 type RBACController struct {
 	service *RBACService
 }
@@ -102,67 +103,3 @@ func (c *RBACController) delete(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-func (c *RBACController) listPermissions(ctx *gin.Context) {
-	role, err := c.service.FindRoleByUUID(ctx.Param("id"))
-	if err != nil {
-		if errors.Is(err, db.ErrEntityNotFound) {
-			ctx.JSON(http.StatusNotFound, web.NewErrorDto(err))
-			return
-		}
-		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
-		return
-	}
-	perms, err := c.service.GetPermissionsByRole(role.ID)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
-		return
-	}
-	dtos := make([]rbac_dto.PermissionDto, len(perms))
-	for i := range perms {
-		dtos[i] = rbac_dto.NewPermissionDto(&perms[i])
-	}
-	ctx.JSON(http.StatusOK, dtos)
-}
-
-func (c *RBACController) assignPermission(ctx *gin.Context) {
-	var input rbac_dto.AssignPermissionDto
-	if err := ctx.ShouldBindJSON(&input); err != nil {
-		ctx.JSON(http.StatusBadRequest, web.NewErrorDto(err))
-		return
-	}
-	if err := c.service.AssignPermissionToRoleByUUID(ctx.Param("id"), input.Name); err != nil {
-		if errors.Is(err, db.ErrEntityNotFound) {
-			ctx.JSON(http.StatusNotFound, web.NewErrorDto(err))
-			return
-		}
-		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
-		return
-	}
-	ctx.Status(http.StatusNoContent)
-}
-
-func (c *RBACController) removePermission(ctx *gin.Context) {
-	role, err := c.service.FindRoleByUUID(ctx.Param("id"))
-	if err != nil {
-		if errors.Is(err, db.ErrEntityNotFound) {
-			ctx.JSON(http.StatusNotFound, web.NewErrorDto(err))
-			return
-		}
-		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
-		return
-	}
-	perm, err := c.service.repo.FindPermissionByUUID(ctx.Param("permId"))
-	if err != nil {
-		if errors.Is(err, db.ErrEntityNotFound) {
-			ctx.JSON(http.StatusNotFound, web.NewErrorDto(err))
-			return
-		}
-		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
-		return
-	}
-	if err := c.service.RemovePermissionFromRole(role.ID, perm.ID); err != nil {
-		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
-		return
-	}
-	ctx.Status(http.StatusNoContent)
-}

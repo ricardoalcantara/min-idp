@@ -27,6 +27,7 @@ type SessionClaims struct {
 	UserUUID    string
 	UserID      uint
 	Email       string
+	Username    string
 	Name        string
 	Roles       []string
 	ExpiresAt   time.Time
@@ -159,8 +160,9 @@ func validateJWT(ctx context.Context, tokenStr string, ks keystore.KeyStore, kv 
 	}
 
 	userUUID, _ := mapClaims["sub"].(string)
-	email, _ := mapClaims["email"].(string)
-	name, _  := mapClaims["name"].(string)
+	email, _    := mapClaims["email"].(string)
+	username, _ := mapClaims["username"].(string)
+	name, _     := mapClaims["name"].(string)
 
 	var userID uint
 	if uid, ok := mapClaims["uid"].(float64); ok {
@@ -186,6 +188,7 @@ func validateJWT(ctx context.Context, tokenStr string, ks keystore.KeyStore, kv 
 		UserUUID:    userUUID,
 		UserID:      userID,
 		Email:       email,
+		Username:    username,
 		Name:        name,
 		Roles:       roles,
 		ExpiresAt:   expiresAt,

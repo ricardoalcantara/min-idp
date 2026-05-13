@@ -12,30 +12,24 @@ import (
 // --- mock ---
 
 type mockRBACRepo struct {
-	role       *rbac_entities.Role
-	permission *rbac_entities.Permission
-	hasPerm    bool
-	err        error
+	role    *rbac_entities.Role
+	hasRole bool
+	err     error
 }
 
-func (m *mockRBACRepo) CreateRole(role *rbac_entities.Role) error                     { return m.err }
-func (m *mockRBACRepo) FindRoleByName(_ string) (*rbac_entities.Role, error)            { return m.role, m.err }
-func (m *mockRBACRepo) FindRoleByID(_ uint) (*rbac_entities.Role, error)               { return m.role, m.err }
-func (m *mockRBACRepo) FindRoleByUUID(_ string) (*rbac_entities.Role, error)           { return m.role, m.err }
-func (m *mockRBACRepo) ListRoles() ([]rbac_entities.Role, error)                       { return nil, m.err }
-func (m *mockRBACRepo) UpdateRole(_ *rbac_entities.Role) error                         { return m.err }
-func (m *mockRBACRepo) DeleteRole(_ uint) error                                        { return m.err }
-func (m *mockRBACRepo) CreatePermission(p *rbac_entities.Permission) error             { return m.err }
-func (m *mockRBACRepo) FindPermissionByUUID(_ string) (*rbac_entities.Permission, error) { return m.permission, m.err }
-func (m *mockRBACRepo) GetPermissionsByRole(_ uint) ([]rbac_entities.Permission, error) { return nil, m.err }
-func (m *mockRBACRepo) AssignPermissionToRole(_, _ uint) error                         { return m.err }
-func (m *mockRBACRepo) RemovePermissionFromRole(_, _ uint) error                       { return m.err }
-func (m *mockRBACRepo) AssignRoleToUser(_, _ uint) error                               { return m.err }
-func (m *mockRBACRepo) RemoveRoleFromUser(_, _ uint) error                             { return m.err }
-func (m *mockRBACRepo) GetRolesByUser(_ uint) ([]rbac_entities.Role, error)            { return nil, m.err }
-func (m *mockRBACRepo) UserHasPermission(_ uint, _ string) (bool, error)              { return m.hasPerm, m.err }
-func (m *mockRBACRepo) GetUserPermissions(_ uint) ([]string, error)                   { return nil, m.err }
-func (m *mockRBACRepo) GetSubjectIDsForUser(_ uint) ([]uint, error)                   { return nil, m.err }
+func (m *mockRBACRepo) CreateRole(role *rbac_entities.Role) error                  { return m.err }
+func (m *mockRBACRepo) FindRoleByName(_ string) (*rbac_entities.Role, error)       { return m.role, m.err }
+func (m *mockRBACRepo) FindRoleByID(_ uint) (*rbac_entities.Role, error)           { return m.role, m.err }
+func (m *mockRBACRepo) FindRoleByUUID(_ string) (*rbac_entities.Role, error)       { return m.role, m.err }
+func (m *mockRBACRepo) ListRoles() ([]rbac_entities.Role, error)                   { return nil, m.err }
+func (m *mockRBACRepo) UpdateRole(_ *rbac_entities.Role) error                     { return m.err }
+func (m *mockRBACRepo) DeleteRole(_ uint) error                                    { return m.err }
+func (m *mockRBACRepo) AssignRoleToUser(_, _ uint) error                           { return m.err }
+func (m *mockRBACRepo) RemoveRoleFromUser(_, _ uint) error                         { return m.err }
+func (m *mockRBACRepo) GetRolesByUser(_ uint) ([]rbac_entities.Role, error)        { return nil, m.err }
+func (m *mockRBACRepo) UserHasRole(_ uint, _ string) (bool, error)                 { return m.hasRole, m.err }
+func (m *mockRBACRepo) GetUserRoleNames(_ uint) ([]string, error)                  { return nil, m.err }
+func (m *mockRBACRepo) GetSubjectIDsForUser(_ uint) ([]uint, error)                { return nil, m.err }
 
 func newTestRBACSvc(repo RBACRepository) *RBACService {
 	return NewRBACService(repo)
@@ -57,24 +51,24 @@ func TestRBACService_CreateRole_RepoError(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// --- UserHasPermission ---
+// --- UserHasRole ---
 
-func TestRBACService_UserHasPermission_True(t *testing.T) {
-	svc := newTestRBACSvc(&mockRBACRepo{hasPerm: true})
-	ok, err := svc.UserHasPermission(1, "system:admin")
+func TestRBACService_UserHasRole_True(t *testing.T) {
+	svc := newTestRBACSvc(&mockRBACRepo{hasRole: true})
+	ok, err := svc.UserHasRole(1, "system:admin")
 	require.NoError(t, err)
 	assert.True(t, ok)
 }
 
-func TestRBACService_UserHasPermission_False(t *testing.T) {
-	svc := newTestRBACSvc(&mockRBACRepo{hasPerm: false})
-	ok, err := svc.UserHasPermission(1, "system:admin")
+func TestRBACService_UserHasRole_False(t *testing.T) {
+	svc := newTestRBACSvc(&mockRBACRepo{hasRole: false})
+	ok, err := svc.UserHasRole(1, "system:admin")
 	require.NoError(t, err)
 	assert.False(t, ok)
 }
 
-func TestRBACService_UserHasPermission_DBError(t *testing.T) {
+func TestRBACService_UserHasRole_DBError(t *testing.T) {
 	svc := newTestRBACSvc(&mockRBACRepo{err: errors.New("db down")})
-	_, err := svc.UserHasPermission(1, "system:admin")
+	_, err := svc.UserHasRole(1, "system:admin")
 	assert.Error(t, err)
 }

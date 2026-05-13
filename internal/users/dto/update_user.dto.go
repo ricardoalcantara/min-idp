@@ -1,14 +1,16 @@
 package user_dto
 
 type UpdateUserDto struct {
-	Email  *string `json:"email"`
-	Name   *string `json:"name"`
-	Status *string `json:"status"`
+	Email    *string `json:"email"`
+	Username *string `json:"username"`
+	Name     *string `json:"name"`
+	Status   *string `json:"status"`
 }
 
 type UpdateMeDto struct {
-	Email *string `json:"email" binding:"omitempty,email"`
-	Name  *string `json:"name"`
+	Email    *string `json:"email"    binding:"omitempty,email"`
+	Username *string `json:"username"`
+	Name     *string `json:"name"`
 }
 
 type ResetPasswordDto struct {
@@ -19,6 +21,3 @@ type AssignRoleDto struct {
 	RoleID string `json:"role_id" binding:"required"`
 }
 
-type AssignGroupDto struct {
-	GroupID string `json:"group_id" binding:"required"`
-}

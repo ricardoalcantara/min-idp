@@ -14,14 +14,13 @@ import (
 )
 
 type SPController struct {
-	service  *SPService
-	rbacSvc  *rbac.RBACService
-	groupSvc *rbac.GroupService
-	userSvc  *users.UserService
+	service *SPService
+	rbacSvc *rbac.RBACService
+	userSvc *users.UserService
 }
 
-func NewSPController(service *SPService, rbacSvc *rbac.RBACService, groupSvc *rbac.GroupService, userSvc *users.UserService) *SPController {
-	return &SPController{service: service, rbacSvc: rbacSvc, groupSvc: groupSvc, userSvc: userSvc}
+func NewSPController(service *SPService, rbacSvc *rbac.RBACService, userSvc *users.UserService) *SPController {
+	return &SPController{service: service, rbacSvc: rbacSvc, userSvc: userSvc}
 }
 
 func (c *SPController) list(ctx *gin.Context) {
@@ -333,12 +332,6 @@ func (c *SPController) resolveSubjectEntityID(ctx *gin.Context, subjectType, sub
 			return 0, err
 		}
 		return role.ID, nil
-	case dbpkg.SubjectTypeGroup:
-		group, err := c.groupSvc.FindByUUID(subjectUUID)
-		if err != nil {
-			return 0, err
-		}
-		return group.ID, nil
 	case dbpkg.SubjectTypeUser:
 		u, err := c.userSvc.FindByUUID(subjectUUID)
 		if err != nil {

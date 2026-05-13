@@ -9,7 +9,4 @@ func RegisterRoutes(r *gin.Engine, c *RBACController, mw ...gin.HandlerFunc) {
 	g.GET("/:id", c.get)
 	g.PATCH("/:id", c.update)
 	g.DELETE("/:id", c.delete)
-	g.GET("/:id/permissions", c.listPermissions)
-	g.POST("/:id/permissions", c.assignPermission)
-	g.DELETE("/:id/permissions/:permId", c.removePermission)
 }

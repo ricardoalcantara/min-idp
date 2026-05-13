@@ -79,7 +79,7 @@
       display: block; font-size: 13px; font-weight: 500;
       color: var(--label); margin-bottom: 6px;
     }
-    input[type=email], input[type=password] {
+    input[type=text], input[type=password] {
       width: 100%; padding: 10px 12px;
       background: var(--input-bg); color: var(--input-text);
       border: 1.5px solid var(--border); border-radius: 8px;
@@ -87,7 +87,7 @@
       transition: border-color .2s, background .25s, color .25s;
       margin-bottom: 16px;
     }
-    input[type=email]:focus, input[type=password]:focus { border-color: #4f46e5; }
+    input[type=text]:focus, input[type=password]:focus { border-color: #4f46e5; }
     .error {
       background: var(--error-bg); border: 1px solid var(--error-bd);
       color: var(--error-tx); border-radius: 8px;
@@ -120,8 +120,8 @@
     {{if .Error}}<div class="error">{{.Error}}</div>{{end}}
     <form method="POST" action="/api/auth/login">
       <input type="hidden" name="next" value="{{.Next}}">
-      <label class="field-label" for="email">Email</label>
-      <input id="email" type="email" name="email" placeholder="you@example.com" required autofocus>
+      <label class="field-label" for="login">Username</label>
+      <input id="login" type="text" name="login" placeholder="you@example.com or admin" required autofocus autocomplete="username">
       <label class="field-label" for="password">Password</label>
       <input id="password" type="password" name="password" placeholder="••••••••" required>
       <button class="submit-btn" type="submit">Sign in</button>

@@ -68,17 +68,10 @@ func (s *BootstrapService) Run(ctx context.Context) error {
 		return fmt.Errorf("bootstrap: saml key: %w", err)
 	}
 
-	for _, name := range []string{"system:admin", "sp:login", "api:user"} {
-		role, err := s.rbacSvc.CreateRole(name, "", true)
-		if err != nil {
+	systemRoles := []string{"system:admin", "sp:login", "api:user"}
+	for _, name := range systemRoles {
+		if _, err := s.rbacSvc.CreateRole(name, "", true); err != nil {
 			return fmt.Errorf("bootstrap: role %s: %w", name, err)
-		}
-		perm, err := s.rbacSvc.CreatePermission(name)
-		if err != nil {
-			return fmt.Errorf("bootstrap: permission %s: %w", name, err)
-		}
-		if err := s.rbacSvc.AssignPermissionToRole(role.ID, perm.ID); err != nil {
-			return fmt.Errorf("bootstrap: assign permission: %w", err)
 		}
 	}
 
@@ -91,12 +84,12 @@ func (s *BootstrapService) Run(ctx context.Context) error {
 	}
 
 	adminEmail := "admin@min-idp.local"
-	adminUser, err := s.usersSvc.Create(adminEmail, "Admin", password)
+	adminUser, err := s.usersSvc.Create(adminEmail, "admin", "Admin", password)
 	if err != nil {
 		return fmt.Errorf("bootstrap: create admin: %w", err)
 	}
 
-	for _, roleName := range []string{"system:admin", "sp:login"} {
+	for _, roleName := range systemRoles {
 		role, err := s.rbacSvc.FindRoleByName(roleName)
 		if err != nil {
 			return fmt.Errorf("bootstrap: find role %s: %w", roleName, err)

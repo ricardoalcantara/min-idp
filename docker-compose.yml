@@ -1,0 +1,19 @@
+services:
+  min-idp:
+    image: ghcr.io/ricardoalcantara/min-idp:v0.1.0-alpha
+    ports:
+      - "8081:8081"
+    volumes:
+      - min-idp-data:/app/data
+    environment:
+      MINSTACK_PORT: 8081
+      MINSTACK_LOG_LEVEL: info
+      MINSTACK_LOG_FORMAT: json
+      MIN_IDP_EXTERNAL_URL: http://localhost:8081
+      MIN_IDP_DB_DRIVER: sqlite
+      MIN_IDP_DB_DSN: /app/data/min-idp.db
+      # Generate with: openssl rand -base64 32
+      MIN_IDP_MASTER_KEY: "change-me-generate-with-openssl-rand-base64-32"
+
+volumes:
+  min-idp-data:

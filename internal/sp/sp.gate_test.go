@@ -33,6 +33,7 @@ func (m *mockGateSPRepo) FindAll(_ ...repository.QueryOption) ([]sp_entities.Ser
 func (m *mockGateSPRepo) GetOIDCClient(_ uint) (*sp_entities.OIDCClient, error)     { return nil, nil }
 func (m *mockGateSPRepo) FindOIDCClientByClientID(_ string) (*sp_entities.OIDCClient, error) { return nil, nil }
 func (m *mockGateSPRepo) UpsertOIDCClient(_ *sp_entities.OIDCClient) error          { return nil }
+func (m *mockGateSPRepo) FindSAMLClientByEntityID(_ string) (*sp_entities.SAMLClient, error) { return nil, nil }
 func (m *mockGateSPRepo) GetSAMLClient(_ uint) (*sp_entities.SAMLClient, error)     { return nil, nil }
 func (m *mockGateSPRepo) UpsertSAMLClient(_ *sp_entities.SAMLClient) error          { return nil }
 func (m *mockGateSPRepo) FindSubjectID(_ string, _ uint) (uint, error)              { return 0, nil }
@@ -47,14 +48,14 @@ func (m *mockGateSPRepo) ListAccessRules(_ uint) ([]sp_repositories.AccessRuleRo
 
 // mockGateRBACRepo implements RBACGateRepository for gate tests.
 type mockGateRBACRepo struct {
-	hasPerm    bool
-	permErr    error
+	hasRole    bool
+	roleErr    error
 	subjectIDs []uint
 	subjectErr error
 }
 
-func (m *mockGateRBACRepo) UserHasPermission(_ uint, _ string) (bool, error) {
-	return m.hasPerm, m.permErr
+func (m *mockGateRBACRepo) UserHasRole(_ uint, _ string) (bool, error) {
+	return m.hasRole, m.roleErr
 }
 func (m *mockGateRBACRepo) GetSubjectIDsForUser(_ uint) ([]uint, error) {
 	return m.subjectIDs, m.subjectErr
@@ -86,14 +87,14 @@ func newGateSvc(spRepo SPRepository, rbacRepo RBACGateRepository) *SPGateService
 
 func TestSPGateService_CanSSO_SPDisabled(t *testing.T) {
 	sp := &sp_entities.ServiceProvider{Slug: "app", Enabled: false}
-	svc := newGateSvc(&mockGateSPRepo{}, &mockGateRBACRepo{hasPerm: true})
+	svc := newGateSvc(&mockGateSPRepo{}, &mockGateRBACRepo{hasRole: true})
 
 	err := svc.CanSSO(1, sp)
 	assert.ErrorIs(t, err, ErrSPDisabled)
 }
 
 func TestSPGateService_CanSSO_NoGlobalPermission(t *testing.T) {
-	svc := newGateSvc(&mockGateSPRepo{}, &mockGateRBACRepo{hasPerm: false})
+	svc := newGateSvc(&mockGateSPRepo{}, &mockGateRBACRepo{hasRole: false})
 
 	err := svc.CanSSO(1, enabledSP("app"))
 	assert.ErrorIs(t, err, ErrAccessDenied)
@@ -101,28 +102,28 @@ func TestSPGateService_CanSSO_NoGlobalPermission(t *testing.T) {
 
 func TestSPGateService_CanSSO_GlobalPermissionChecksError(t *testing.T) {
 	dbErr := errors.New("db down")
-	svc := newGateSvc(&mockGateSPRepo{}, &mockGateRBACRepo{permErr: dbErr})
+	svc := newGateSvc(&mockGateSPRepo{}, &mockGateRBACRepo{roleErr: dbErr})
 
 	err := svc.CanSSO(1, enabledSP("app"))
 	assert.ErrorIs(t, err, dbErr)
 }
 
-func TestSPGateService_CanSSO_NoRulesDefaultDeny(t *testing.T) {
-	// User has sp:login but SP has no access rules → default deny
+func TestSPGateService_CanSSO_NoRulesDefaultAllow(t *testing.T) {
+	// User has sp:login and SP has no access rules → default allow (minimum effort setup)
 	svc := newGateSvc(
 		&mockGateSPRepo{rules: []sp_repositories.AccessRuleRow{}},
-		&mockGateRBACRepo{hasPerm: true, subjectIDs: []uint{10}},
+		&mockGateRBACRepo{hasRole: true, subjectIDs: []uint{10}},
 	)
 
 	err := svc.CanSSO(1, enabledSP("app"))
-	assert.ErrorIs(t, err, ErrAccessDenied)
+	assert.NoError(t, err)
 }
 
 func TestSPGateService_CanSSO_AllowRuleMatchesRole(t *testing.T) {
 	// Subject 10 = user's role-subject; rule allows it
 	svc := newGateSvc(
 		&mockGateSPRepo{rules: []sp_repositories.AccessRuleRow{allowRule(10, 0)}},
-		&mockGateRBACRepo{hasPerm: true, subjectIDs: []uint{10}},
+		&mockGateRBACRepo{hasRole: true, subjectIDs: []uint{10}},
 	)
 
 	err := svc.CanSSO(1, enabledSP("app"))
@@ -136,7 +137,7 @@ func TestSPGateService_CanSSO_DenyRuleBeforeAllow(t *testing.T) {
 			denyRule(10, 0),
 			allowRule(10, 1),
 		}},
-		&mockGateRBACRepo{hasPerm: true, subjectIDs: []uint{10}},
+		&mockGateRBACRepo{hasRole: true, subjectIDs: []uint{10}},
 	)
 
 	err := svc.CanSSO(1, enabledSP("app"))
@@ -147,7 +148,7 @@ func TestSPGateService_CanSSO_NoMatchingRuleDefaultDeny(t *testing.T) {
 	// Rules exist but none match the user's subjects
 	svc := newGateSvc(
 		&mockGateSPRepo{rules: []sp_repositories.AccessRuleRow{allowRule(99, 0)}},
-		&mockGateRBACRepo{hasPerm: true, subjectIDs: []uint{10, 20}},
+		&mockGateRBACRepo{hasRole: true, subjectIDs: []uint{10, 20}},
 	)
 
 	err := svc.CanSSO(1, enabledSP("app"))
@@ -173,7 +174,7 @@ type stubSlugRBACRepo struct {
 	callCount *int
 }
 
-func (s *stubSlugRBACRepo) UserHasPermission(_ uint, perm string) (bool, error) {
+func (s *stubSlugRBACRepo) UserHasRole(_ uint, perm string) (bool, error) {
 	if perm == "sp:login:"+s.slug {
 		return true, nil
 	}

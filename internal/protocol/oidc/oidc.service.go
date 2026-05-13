@@ -47,6 +47,7 @@ type AuthCodeData struct {
 	UserID              uint   `json:"user_id"`
 	UserUUID            string `json:"user_uuid"`
 	Email               string `json:"email"`
+	Username            string `json:"username"`
 	Name                string `json:"name"`
 	SessionUUID         string `json:"session_uuid"`
 	RedirectURI         string `json:"redirect_uri"`
@@ -140,7 +141,7 @@ func (s *OIDCService) ExchangeCode(ctx context.Context, req oidc_dto.TokenReques
 
 	val, err := s.kv.Get(ctx, "oauth_code:"+codeHash)
 	if err != nil {
-		return nil, ErrInvalidGrant
+		return nil, fmt.Errorf("code not found: %w", ErrInvalidGrant)
 	}
 	// Delete immediately after fetching to prevent reuse
 	_ = s.kv.Delete(ctx, "oauth_code:"+codeHash)
@@ -151,10 +152,10 @@ func (s *OIDCService) ExchangeCode(ctx context.Context, req oidc_dto.TokenReques
 	}
 
 	if data.ClientID != client.ClientID {
-		return nil, ErrInvalidGrant
+		return nil, fmt.Errorf("client_id mismatch stored=%s got=%s: %w", data.ClientID, client.ClientID, ErrInvalidGrant)
 	}
-	if data.RedirectURI != req.RedirectURI {
-		return nil, ErrInvalidGrant
+	if req.RedirectURI != "" && data.RedirectURI != req.RedirectURI {
+		return nil, fmt.Errorf("redirect_uri mismatch stored=%s got=%s: %w", data.RedirectURI, req.RedirectURI, ErrInvalidGrant)
 	}
 
 	if client.PKCERequired || data.CodeChallenge != "" {
@@ -174,7 +175,7 @@ func (s *OIDCService) ExchangeCode(ctx context.Context, req oidc_dto.TokenReques
 		}
 	}
 
-	return s.issueTokens(ctx, client, data.UserID, data.UserUUID, data.Email, data.Name, data.SessionUUID, data.Scope, data.Nonce, nil)
+	return s.issueTokens(ctx, client, data.UserID, data.UserUUID, data.Email, data.Username, data.Name, data.SessionUUID, data.Scope, data.Nonce, nil)
 }
 
 // ExchangeRefreshToken performs the refresh token grant.
@@ -199,7 +200,7 @@ func (s *OIDCService) ExchangeRefreshToken(ctx context.Context, req oidc_dto.Tok
 	// We can decode the user UUID from session or fetch it. We will just pass an empty string for now, but
 	// ID token might need it.
 
-	return s.issueTokens(ctx, client, token.UserID, "", "", "", token.SessionUUID, token.Scope, "", &token.ID)
+	return s.issueTokens(ctx, client, token.UserID, "", "", "", "", token.SessionUUID, token.Scope, "", &token.ID)
 }
 
 func (s *OIDCService) issueTokens(
@@ -208,6 +209,7 @@ func (s *OIDCService) issueTokens(
 	userID uint,
 	userUUID string,
 	email string,
+	username string,
 	name string,
 	sessionUUID string,
 	scope string,
@@ -216,11 +218,11 @@ func (s *OIDCService) issueTokens(
 ) (*oidc_dto.TokenResponse, error) {
 	now := time.Now()
 	// Scopes can dictate what is issued
-	roles, _ := s.rbacSvc.GetUserPermissions(userID)
+	roles, _ := s.rbacSvc.GetUserRoleNames(userID)
 
 	// Issue Access Token as JWT
 	accessJTI := uuid.NewString()
-	accessToken, err := s.mintAccessToken(ctx, client.ClientID, accessJTI, userID, userUUID, roles, scope, 1*time.Hour)
+	accessToken, err := s.mintAccessToken(ctx, client.ClientID, accessJTI, userID, userUUID, email, username, name, roles, scope, 1*time.Hour)
 	if err != nil {
 		return nil, err
 	}
@@ -336,8 +338,10 @@ func (s *OIDCService) GetUserInfo(ctx context.Context, accessToken string) (*oid
 		return nil, errors.New("token revoked or expired")
 	}
 
-	sub, _   := claims["sub"].(string)
-	email, _ := claims["email"].(string)
+	sub, _      := claims["sub"].(string)
+	email, _    := claims["email"].(string)
+	username, _ := claims["username"].(string)
+	name, _     := claims["name"].(string)
 
 	var roles []string
 	if rArr, ok := claims["roles"].([]interface{}); ok {
@@ -349,14 +353,16 @@ func (s *OIDCService) GetUserInfo(ctx context.Context, accessToken string) (*oid
 	}
 
 	return &oidc_dto.UserInfoResponse{
-		Sub:   sub,
-		Email: email,
-		Roles: roles,
+		Sub:               sub,
+		Email:             email,
+		Username: username,
+		Name:              name,
+		Roles:             roles,
 	}, nil
 }
 
 // Mint access token as JWT
-func (s *OIDCService) mintAccessToken(ctx context.Context, clientID, jti string, userID uint, userUUID string, roles []string, scope string, expiry time.Duration) (string, error) {
+func (s *OIDCService) mintAccessToken(ctx context.Context, clientID, jti string, userID uint, userUUID, email, username, name string, roles []string, scope string, expiry time.Duration) (string, error) {
 	now := time.Now()
 	claims := jwt.MapClaims{
 		"iss":       s.cfg.ExternalURL,
@@ -367,6 +373,15 @@ func (s *OIDCService) mintAccessToken(ctx context.Context, clientID, jti string,
 		"roles":     roles,
 		"iat":       jwt.NewNumericDate(now),
 		"exp":       jwt.NewNumericDate(now.Add(expiry)),
+	}
+	if email != "" {
+		claims["email"] = email
+	}
+	if username != "" {
+		claims["username"] = username
+	}
+	if name != "" {
+		claims["name"] = name
 	}
 
 	return s.signClaims(ctx, claims)

@@ -10,16 +10,11 @@ type RBACRepository interface {
 	ListRoles() ([]rbac_entities.Role, error)
 	UpdateRole(role *rbac_entities.Role) error
 	DeleteRole(id uint) error
-	CreatePermission(perm *rbac_entities.Permission) error
-	FindPermissionByUUID(uuid string) (*rbac_entities.Permission, error)
-	GetPermissionsByRole(roleID uint) ([]rbac_entities.Permission, error)
-	AssignPermissionToRole(roleID, permID uint) error
-	RemovePermissionFromRole(roleID, permID uint) error
 	AssignRoleToUser(userID, roleID uint) error
 	RemoveRoleFromUser(userID, roleID uint) error
 	GetRolesByUser(userID uint) ([]rbac_entities.Role, error)
-	UserHasPermission(userID uint, permission string) (bool, error)
-	GetUserPermissions(userID uint) ([]string, error)
+	UserHasRole(userID uint, role string) (bool, error)
+	GetUserRoleNames(userID uint) ([]string, error)
 	GetSubjectIDsForUser(userID uint) ([]uint, error)
 }
 
@@ -70,35 +65,6 @@ func (s *RBACService) DeleteRole(id uint) error {
 	return s.repo.DeleteRole(id)
 }
 
-func (s *RBACService) CreatePermission(name string) (*rbac_entities.Permission, error) {
-	perm := &rbac_entities.Permission{Name: name}
-	return perm, s.repo.CreatePermission(perm)
-}
-
-func (s *RBACService) GetPermissionsByRole(roleID uint) ([]rbac_entities.Permission, error) {
-	return s.repo.GetPermissionsByRole(roleID)
-}
-
-func (s *RBACService) AssignPermissionToRole(roleID, permID uint) error {
-	return s.repo.AssignPermissionToRole(roleID, permID)
-}
-
-func (s *RBACService) AssignPermissionToRoleByUUID(roleUUID, permName string) error {
-	role, err := s.repo.FindRoleByUUID(roleUUID)
-	if err != nil {
-		return err
-	}
-	perm, err := s.CreatePermission(permName)
-	if err != nil {
-		return err
-	}
-	return s.repo.AssignPermissionToRole(role.ID, perm.ID)
-}
-
-func (s *RBACService) RemovePermissionFromRole(roleID, permID uint) error {
-	return s.repo.RemovePermissionFromRole(roleID, permID)
-}
-
 func (s *RBACService) AssignRoleToUser(userID, roleID uint) error {
 	return s.repo.AssignRoleToUser(userID, roleID)
 }
@@ -123,12 +89,12 @@ func (s *RBACService) GetRolesByUser(userID uint) ([]rbac_entities.Role, error) 
 	return s.repo.GetRolesByUser(userID)
 }
 
-func (s *RBACService) UserHasPermission(userID uint, permission string) (bool, error) {
-	return s.repo.UserHasPermission(userID, permission)
+func (s *RBACService) UserHasRole(userID uint, role string) (bool, error) {
+	return s.repo.UserHasRole(userID, role)
 }
 
-func (s *RBACService) GetUserPermissions(userID uint) ([]string, error) {
-	return s.repo.GetUserPermissions(userID)
+func (s *RBACService) GetUserRoleNames(userID uint) ([]string, error) {
+	return s.repo.GetUserRoleNames(userID)
 }
 
 func (s *RBACService) GetSubjectIDsForUser(userID uint) ([]uint, error) {

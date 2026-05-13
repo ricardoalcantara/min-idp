@@ -1,12 +1,11 @@
 package db
 
 const (
-	SubjectTypeRole  = "role"
-	SubjectTypeGroup = "group"
-	SubjectTypeUser  = "user"
+	SubjectTypeRole = "role"
+	SubjectTypeUser = "user"
 )
 
-// Subject is the unified principals table. Roles, groups, and users each get
+// Subject is the unified principals table. Roles and users each get
 // an entry here when created so access_rules can reference them with a single FK.
 type Subject struct {
 	ID       uint   `gorm:"primaryKey"`

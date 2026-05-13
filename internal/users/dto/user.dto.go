@@ -3,11 +3,12 @@ package user_dto
 import user_entities "github.com/ricardoalcantara/min-idp/internal/users/entities"
 
 type UserDto struct {
-	UUID   string   `json:"uuid"`
-	Email  string   `json:"email"`
-	Name   string   `json:"name,omitempty"`
-	Status string   `json:"status"`
-	Roles  []string `json:"roles"`
+	UUID     string   `json:"uuid"`
+	Email    string   `json:"email"`
+	Username string   `json:"username,omitempty"`
+	Name     string   `json:"name,omitempty"`
+	Status   string   `json:"status"`
+	Roles    []string `json:"roles"`
 }
 
 func NewUserDto(u *user_entities.User) UserDto {
@@ -16,10 +17,11 @@ func NewUserDto(u *user_entities.User) UserDto {
 		roles[i] = r.Name
 	}
 	return UserDto{
-		UUID:   u.UUID.String(),
-		Email:  u.Email,
-		Name:   u.Name,
-		Status: u.Status,
-		Roles:  roles,
+		UUID:     u.UUID.String(),
+		Email:    u.Email,
+		Username: u.Username,
+		Name:     u.Name,
+		Status:   u.Status,
+		Roles:    roles,
 	}
 }

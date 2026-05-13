@@ -24,8 +24,6 @@ import (
 	"github.com/ricardoalcantara/min-idp/internal/views"
 )
 
-
-
 type OIDCController struct {
 	ks      keystore.KeyStore
 	kv      kvstore.KVStore
@@ -114,6 +112,7 @@ func (c *OIDCController) authorize(ctx *gin.Context) {
 		UserID:              sess.UserID,
 		UserUUID:            sess.UserUUID,
 		Email:               sess.Email,
+		Username:            sess.Username,
 		Name:                sess.Name,
 		SessionUUID:         sess.SessionUUID,
 		RedirectURI:         redirectURI,
@@ -173,6 +172,14 @@ func (c *OIDCController) token(ctx *gin.Context) {
 		clientID, clientSecret, _ = ctx.Request.BasicAuth()
 	}
 
+	c.log.Debug("token request",
+		"grant_type", req.GrantType,
+		"client_id", clientID,
+		"redirect_uri", req.RedirectURI,
+		"code_len", len(req.Code),
+		"refresh_token_len", len(req.RefreshToken),
+	)
+
 	if clientID == "" {
 		ctx.JSON(http.StatusUnauthorized, oidc_dto.NewOAuth2Error("invalid_client", ""))
 		return
@@ -195,6 +202,7 @@ func (c *OIDCController) token(ctx *gin.Context) {
 	}
 
 	if err != nil {
+		c.log.Debug("token exchange failed", "error", err)
 		ctx.JSON(http.StatusBadRequest, oidc_dto.NewOAuth2Error("invalid_grant", ""))
 		return
 	}
@@ -214,6 +222,14 @@ func (c *OIDCController) userinfo(ctx *gin.Context) {
 		ctx.JSON(http.StatusUnauthorized, oidc_dto.NewOAuth2Error("invalid_token", ""))
 		return
 	}
+	c.log.Debug(
+		"userinfo request",
+		"user_id", res.Sub,
+		"email", res.Email,
+		"username", res.Username,
+		"name", res.Name,
+		"session_uuid", c.extractSessionUUIDFromToken(tokenStr))
+
 	ctx.JSON(http.StatusOK, res)
 }
 

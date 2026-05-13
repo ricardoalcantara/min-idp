@@ -8,6 +8,7 @@ import (
 type User struct {
 	db.Model
 	Email        string               `gorm:"uniqueIndex;not null"`
+	Username     string               `gorm:"uniqueIndex"`
 	Name         string
 	PasswordHash string               `gorm:"not null"`
 	Status       string               `gorm:"default:'active'"`

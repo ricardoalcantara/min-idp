@@ -105,6 +105,12 @@ func (s *SAMLService) GetSession(w http.ResponseWriter, r *http.Request, req *cr
 				Values:       []crewjam.AttributeValue{{Type: "xs:string", Value: claims.Email}},
 			},
 			{
+				FriendlyName: "username",
+				Name:         "username",
+				NameFormat:   "urn:oasis:names:tc:SAML:2.0:attrname-format:basic",
+				Values:       []crewjam.AttributeValue{{Type: "xs:string", Value: func() string { if claims.Username != "" { return claims.Username }; return claims.Email }()}},
+			},
+			{
 				FriendlyName: "name",
 				Name:         "name",
 				NameFormat:   "urn:oasis:names:tc:SAML:2.0:attrname-format:basic",

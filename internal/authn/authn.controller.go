@@ -109,7 +109,7 @@ func (c *AuthnController) login(ctx *gin.Context) {
 		return
 	}
 
-	u, err := c.service.Authenticate(input.Email, input.Password)
+	u, err := c.service.Authenticate(input.Login, input.Password)
 	if err != nil {
 		if errors.Is(err, ErrInvalidCredentials) {
 			ctx.JSON(http.StatusUnauthorized, web.NewErrorDto(err))
@@ -119,8 +119,8 @@ func (c *AuthnController) login(ctx *gin.Context) {
 		return
 	}
 
-	hasAPIUser, _ := c.rbacSvc.UserHasPermission(u.ID, "api:user")
-	hasAdmin, err := c.rbacSvc.UserHasPermission(u.ID, "system:admin")
+	hasAPIUser, _ := c.rbacSvc.UserHasRole(u.ID, "api:user")
+	hasAdmin, err := c.rbacSvc.UserHasRole(u.ID, "system:admin")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
 		return
@@ -136,7 +136,7 @@ func (c *AuthnController) login(ctx *gin.Context) {
 		return
 	}
 
-	token, err := c.mintToken(ctx, u.ID, u.UUID.String(), sess.UUID.String(), u.Email, u.Name, sess.ExpiresAt)
+	token, err := c.mintToken(ctx, u.ID, u.UUID.String(), sess.UUID.String(), u.Email, u.Username, u.Name, sess.ExpiresAt)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
 		return
@@ -146,7 +146,7 @@ func (c *AuthnController) login(ctx *gin.Context) {
 }
 
 func (c *AuthnController) loginForm(ctx *gin.Context) {
-	email := ctx.PostForm("email")
+	login := ctx.PostForm("login")
 	password := ctx.PostForm("password")
 	next := ctx.PostForm("next")
 
@@ -156,10 +156,10 @@ func (c *AuthnController) loginForm(ctx *gin.Context) {
 		_ = views.LoginTmpl.Execute(ctx.Writer, map[string]string{"Next": next, "Error": msg})
 	}
 
-	u, err := c.service.Authenticate(email, password)
+	u, err := c.service.Authenticate(login, password)
 	if err != nil {
 		if errors.Is(err, ErrInvalidCredentials) {
-			renderLoginError(http.StatusUnauthorized, "Invalid email or password.")
+			renderLoginError(http.StatusUnauthorized, "Invalid credentials.")
 		} else {
 			renderLoginError(http.StatusInternalServerError, "Internal error. Please try again.")
 		}
@@ -172,7 +172,7 @@ func (c *AuthnController) loginForm(ctx *gin.Context) {
 		return
 	}
 
-	token, err := c.mintToken(ctx, u.ID, u.UUID.String(), sess.UUID.String(), u.Email, u.Name, sess.ExpiresAt)
+	token, err := c.mintToken(ctx, u.ID, u.UUID.String(), sess.UUID.String(), u.Email, u.Username, u.Name, sess.ExpiresAt)
 	if err != nil {
 		renderLoginError(http.StatusInternalServerError, "Internal error. Please try again.")
 		return
@@ -217,8 +217,8 @@ func (c *AuthnController) register(ctx *gin.Context) {
 	ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented"))
 }
 
-func (c *AuthnController) mintToken(ctx *gin.Context, userID uint, userUUID, sessionUUID, email, name string, expiresAt time.Time) (string, error) {
-	roles, _ := c.rbacSvc.GetUserPermissions(userID)
+func (c *AuthnController) mintToken(ctx *gin.Context, userID uint, userUUID, sessionUUID, email, username, name string, expiresAt time.Time) (string, error) {
+	roles, _ := c.rbacSvc.GetUserRoleNames(userID)
 
 	key, meta, err := c.ks.ActivePrivateKey(ctx.Request.Context(), keystore_entities.ProtocolOIDC)
 	if err != nil {
@@ -226,7 +226,7 @@ func (c *AuthnController) mintToken(ctx *gin.Context, userID uint, userUUID, ses
 	}
 
 	return MintSessionJWT(key, SigningConfig{KID: meta.KID, Issuer: c.cfg.ExternalURL},
-		userID, userUUID, sessionUUID, email, name, roles, time.Until(expiresAt))
+		userID, userUUID, sessionUUID, email, username, name, roles, time.Until(expiresAt))
 }
 
 func (c *AuthnController) extractSessionUUID(ctx *gin.Context) string {

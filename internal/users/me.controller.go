@@ -50,6 +50,9 @@ func (c *MeController) update(ctx *gin.Context) {
 	if input.Email != nil {
 		u.Email = *input.Email
 	}
+	if input.Username != nil {
+		u.Username = *input.Username
+	}
 	if input.Name != nil {
 		u.Name = *input.Name
 	}

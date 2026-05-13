@@ -31,7 +31,6 @@ func registerAdminRoutes(
 	cookieToken *session.CookieTokenService,
 	userCtrl *users.UserController,
 	rbacCtrl *rbac.RBACController,
-	groupCtrl *rbac.GroupController,
 	spCtrl *sp.SPController,
 	keyCtrl *keystore.KeyStoreController,
 	auditCtrl *audit.AuditController,
@@ -39,11 +38,10 @@ func registerAdminRoutes(
 	adminMW := []gin.HandlerFunc{
 		sessionSvc.APIMiddleware(cfg.SessionCookie, ks, kv, cookieToken),
 		session.RequireSession(),
-		rbac.RequirePermission(rbacSvc, "system:admin"),
+		rbac.RequireRole(rbacSvc, "system:admin"),
 	}
 	users.RegisterUserRoutes(r, userCtrl, adminMW...)
 	rbac.RegisterRoutes(r, rbacCtrl, adminMW...)
-	rbac.RegisterGroupRoutes(r, groupCtrl, adminMW...)
 	sp.RegisterRoutes(r, spCtrl, adminMW...)
 	keystore.RegisterRoutes(r, keyCtrl, adminMW...)
 	audit.RegisterRoutes(r, auditCtrl, adminMW...)

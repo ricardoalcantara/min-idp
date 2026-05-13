@@ -1,10 +1,10 @@
 -- +goose Up
 
--- subjects is a unified principals table: roles, groups, and users register here.
+-- subjects is a unified principals table: roles and users register here.
 -- access_rules.subject_id references this table, eliminating the need for subject_type on rules.
 CREATE TABLE IF NOT EXISTS subjects (
     id        INTEGER PRIMARY KEY AUTOINCREMENT,
-    type      TEXT NOT NULL,      -- "role" | "group" | "user"
+    type      TEXT NOT NULL,      -- "role" | "user"
     entity_id INTEGER NOT NULL,
     UNIQUE(type, entity_id)
 );
@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
     deleted_at DATETIME,
     uuid          TEXT NOT NULL UNIQUE,
     email         TEXT NOT NULL UNIQUE,
+    username      TEXT UNIQUE,
     name          TEXT,
     password_hash TEXT NOT NULL,
     status        TEXT NOT NULL DEFAULT 'active'
@@ -34,43 +35,10 @@ CREATE TABLE IF NOT EXISTS roles (
 );
 CREATE INDEX IF NOT EXISTS idx_roles_deleted_at ON roles(deleted_at);
 
-CREATE TABLE IF NOT EXISTS permissions (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    created_at DATETIME,
-    updated_at DATETIME,
-    deleted_at DATETIME,
-    uuid       TEXT NOT NULL UNIQUE,
-    name       TEXT NOT NULL UNIQUE
-);
-CREATE INDEX IF NOT EXISTS idx_permissions_deleted_at ON permissions(deleted_at);
-
-CREATE TABLE IF NOT EXISTS role_permissions (
-    role_id       INTEGER NOT NULL,
-    permission_id INTEGER NOT NULL,
-    PRIMARY KEY (role_id, permission_id)
-);
-
 CREATE TABLE IF NOT EXISTS user_roles (
     user_id INTEGER NOT NULL,
     role_id INTEGER NOT NULL,
     PRIMARY KEY (user_id, role_id)
-);
-
-CREATE TABLE IF NOT EXISTS groups (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    created_at  DATETIME,
-    updated_at  DATETIME,
-    deleted_at  DATETIME,
-    uuid        TEXT NOT NULL UNIQUE,
-    name        TEXT NOT NULL UNIQUE,
-    description TEXT
-);
-CREATE INDEX IF NOT EXISTS idx_groups_deleted_at ON groups(deleted_at);
-
-CREATE TABLE IF NOT EXISTS user_groups (
-    user_id  INTEGER NOT NULL,
-    group_id INTEGER NOT NULL,
-    PRIMARY KEY (user_id, group_id)
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -249,10 +217,6 @@ DROP TABLE IF EXISTS oidc_clients;
 DROP TABLE IF EXISTS service_providers;
 DROP TABLE IF EXISTS sp_sessions;
 DROP TABLE IF EXISTS sessions;
-DROP TABLE IF EXISTS user_groups;
-DROP TABLE IF EXISTS groups;
 DROP TABLE IF EXISTS user_roles;
-DROP TABLE IF EXISTS role_permissions;
-DROP TABLE IF EXISTS permissions;
 DROP TABLE IF EXISTS roles;
 DROP TABLE IF EXISTS users;

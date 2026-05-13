@@ -16,7 +16,7 @@ var ErrSPDisabled = errors.New("service provider is disabled")
 // RBACGateRepository is the minimal RBAC interface the SSO gate needs.
 // Defined here so the sp package has no import dependency on the rbac package.
 type RBACGateRepository interface {
-	UserHasPermission(userID uint, permission string) (bool, error)
+	UserHasRole(userID uint, role string) (bool, error)
 	GetSubjectIDsForUser(userID uint) ([]uint, error)
 }
 
@@ -40,12 +40,12 @@ func (g *SPGateService) CanSSO(userID uint, sp *sp_entities.ServiceProvider) err
 	}
 
 	// Step 1 — global gate: sp:login OR sp:login:<slug>
-	hasGlobal, err := g.rbacRepo.UserHasPermission(userID, "sp:login")
+	hasGlobal, err := g.rbacRepo.UserHasRole(userID, "sp:login")
 	if err != nil {
 		return err
 	}
 	if !hasGlobal {
-		hasSlug, err := g.rbacRepo.UserHasPermission(userID, "sp:login:"+sp.Slug)
+		hasSlug, err := g.rbacRepo.UserHasRole(userID, "sp:login:"+sp.Slug)
 		if err != nil {
 			return err
 		}

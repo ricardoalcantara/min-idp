@@ -36,6 +36,15 @@ func (r *UserRepository) FindByEmail(email string) (*user_entities.User, error) 
 	return &u, err
 }
 
+func (r *UserRepository) FindByUsername(username string) (*user_entities.User, error) {
+	var u user_entities.User
+	err := r.db.Where("username = ?", username).First(&u).Error
+	if errors.Is(err, gormdb.ErrRecordNotFound) {
+		return nil, db.ErrEntityNotFound
+	}
+	return &u, err
+}
+
 func (r *UserRepository) FindByUUID(uuid string) (*user_entities.User, error) {
 	var u user_entities.User
 	err := r.db.Preload("Roles").Where("uuid = ?", uuid).First(&u).Error

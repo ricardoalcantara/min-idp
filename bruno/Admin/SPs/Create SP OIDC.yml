@@ -6,17 +6,17 @@ info:
 http:
   method: POST
   url: "{{baseUrl}}/api/admin/sps"
-  auth:
-    type: bearer
-    token: "{{accessToken}}"
   body:
     type: json
     data: |-
       {
-        "slug": "my-app",
-        "name": "My Application",
+        "slug": "{{?slug}}",
+        "name": "{{?name}}",
         "protocol": "oidc"
       }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
 
 runtime:
   scripts:

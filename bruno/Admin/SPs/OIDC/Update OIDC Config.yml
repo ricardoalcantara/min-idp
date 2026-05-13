@@ -10,10 +10,10 @@ http:
     type: json
     data: |-
       {
-        "client_id": "my-app-client",
-        "client_secret": "super-secret",
+        "client_id": "{{?clientId}}",
+        "client_secret": "{{?clientSecret}}",
         "redirect_uris": [
-          "http://localhost:3001/api/auth/oidc/callback"
+          "{{?redirectUri}}"
         ],
         "grant_types": [
           "authorization_code"
@@ -27,7 +27,7 @@ http:
           "profile"
         ],
         "token_endpoint_auth": "client_secret_basic",
-        "pkce_required": true
+        "pkce_required": false
       }
   auth:
     type: bearer

@@ -10,11 +10,14 @@ http:
     type: json
     data: |-
       {
-        "email": "admin@min-idp.local",
+        "login": "admin",
         "password": "{{adminPassword}}"
       }
 
 runtime:
+  variables:
+    - name: baseUrl
+      value: https://min-idp.toquinha.online
   scripts:
     - type: after-response
       code: bru.setEnvVar("accessToken", res.body.access_token)

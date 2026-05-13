@@ -6,17 +6,17 @@ info:
 http:
   method: POST
   url: "{{baseUrl}}/api/admin/sps"
-  auth:
-    type: bearer
-    token: "{{accessToken}}"
   body:
     type: json
     data: |-
       {
-        "slug": "saml-test-sp",
-        "name": "SAML Test SP",
+        "slug": "{{?slug}}",
+        "name": "{{?name}}",
         "protocol": "saml"
       }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
 
 runtime:
   scripts:

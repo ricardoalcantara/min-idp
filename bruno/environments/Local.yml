@@ -12,5 +12,3 @@ variables:
     value: ""
   - name: roleId
     value: ""
-  - name: groupId
-    value: ""

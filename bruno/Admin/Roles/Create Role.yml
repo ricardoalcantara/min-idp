@@ -6,16 +6,16 @@ info:
 http:
   method: POST
   url: "{{baseUrl}}/api/admin/roles"
-  auth:
-    type: bearer
-    token: "{{accessToken}}"
   body:
     type: json
     data: |-
       {
-        "name": "my-role",
-        "description": "A custom role"
+        "name": "readwrite",
+        "description": "MinIO ROLE"
       }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
 
 settings:
   encodeUrl: true

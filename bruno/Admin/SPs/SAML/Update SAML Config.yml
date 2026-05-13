@@ -21,6 +21,11 @@ http:
     type: bearer
     token: "{{accessToken}}"
 
+runtime:
+  variables:
+    - name: baseUrl
+      value: https://min-idp.toquinha.online
+
 settings:
   encodeUrl: true
   timeout: 0

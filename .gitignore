@@ -1,4 +1,7 @@
 /min-idp
+docker-compose.override.yml
+bruno/environments/*.yml
+!bruno/environments/Local.yml
 *.db
 *.db-wal
 *.db-shm

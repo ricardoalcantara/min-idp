@@ -6,15 +6,16 @@ info:
 http:
   method: PATCH
   url: "{{baseUrl}}/api/admin/roles/{{?roleId}}"
-  auth:
-    type: bearer
-    token: "{{accessToken}}"
   body:
     type: json
     data: |-
       {
+        "name": "minio",
         "description": "Updated description"
       }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
 
 settings:
   encodeUrl: true

@@ -14,7 +14,7 @@ http:
     data: |-
       {
         "email": "user@min-idp.local",
-        "password": "password123"
+        "password": "{{?password}}"
       }
 
 settings:

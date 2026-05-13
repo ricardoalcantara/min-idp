@@ -5,16 +5,21 @@ info:
 
 http:
   method: POST
-  url: "{{baseUrl}}/api/admin/users/{{?userId}}/roles"
-  auth:
-    type: bearer
-    token: "{{accessToken}}"
+  url: "{{baseUrl}}/api/admin/users/{{userId}}/roles"
   body:
     type: json
     data: |-
       {
         "role_id": "{{?roleId}}"
       }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  variables:
+    - name: userId
+      value: fee5288e-9e10-4607-b617-435d774f2f87
 
 settings:
   encodeUrl: true

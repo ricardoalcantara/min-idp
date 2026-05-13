@@ -91,7 +91,7 @@ func (s *BootstrapService) Run(ctx context.Context) error {
 	}
 
 	adminEmail := "admin@min-idp.local"
-	adminUser, err := s.usersSvc.Create(adminEmail, password)
+	adminUser, err := s.usersSvc.Create(adminEmail, "Admin", password)
 	if err != nil {
 		return fmt.Errorf("bootstrap: create admin: %w", err)
 	}

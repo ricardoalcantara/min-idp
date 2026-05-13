@@ -97,6 +97,15 @@ func (r *SPRepository) GetSAMLClient(spID uint) (*sp_entities.SAMLClient, error)
 	return &c, err
 }
 
+func (r *SPRepository) FindSAMLClientByEntityID(entityID string) (*sp_entities.SAMLClient, error) {
+	var c sp_entities.SAMLClient
+	err := r.db.Where("entity_id = ?", entityID).First(&c).Error
+	if errors.Is(err, gormdb.ErrRecordNotFound) {
+		return nil, dbpkg.ErrEntityNotFound
+	}
+	return &c, err
+}
+
 func (r *SPRepository) UpsertSAMLClient(c *sp_entities.SAMLClient) error {
 	var existing sp_entities.SAMLClient
 	err := r.db.Where("sp_id = ?", c.SPID).First(&existing).Error

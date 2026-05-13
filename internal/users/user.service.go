@@ -29,13 +29,14 @@ func NewUserService(repo UserRepository) *UserService {
 	return &UserService{repo: repo}
 }
 
-func (s *UserService) Create(email, password string) (*user_entities.User, error) {
+func (s *UserService) Create(email, name, password string) (*user_entities.User, error) {
 	hash, err := crypto.HashPassword(password)
 	if err != nil {
 		return nil, err
 	}
 	u := &user_entities.User{
 		Email:        email,
+		Name:         name,
 		PasswordHash: hash,
 		Status:       "active",
 	}
@@ -84,13 +85,16 @@ func (s *UserService) List(page, pageSize int) ([]*user_entities.User, int64, er
 	return s.repo.List(page, pageSize)
 }
 
-func (s *UserService) Update(uuid string, email, status *string) (*user_entities.User, error) {
+func (s *UserService) Update(uuid string, email, name, status *string) (*user_entities.User, error) {
 	u, err := s.repo.FindByUUID(uuid)
 	if err != nil {
 		return nil, err
 	}
 	if email != nil {
 		u.Email = *email
+	}
+	if name != nil {
+		u.Name = *name
 	}
 	if status != nil {
 		u.Status = *status

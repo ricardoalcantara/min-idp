@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"html/template"
 	"net/http"
 	"strings"
 	"time"
@@ -18,277 +17,10 @@ import (
 	"github.com/ricardoalcantara/min-idp/internal/kvstore"
 	"github.com/ricardoalcantara/min-idp/internal/rbac"
 	"github.com/ricardoalcantara/min-idp/internal/session"
+	"github.com/ricardoalcantara/min-idp/internal/views"
 )
 
 const LoginStateCookie = "min_idp_login_state"
-
-var loginTmpl = template.Must(template.New("login").Parse(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sign in — min-idp</title>
-  <style>
-    :root {
-      --bg:         #f5f7fa;
-      --card:       #ffffff;
-      --shadow:     0 4px 24px rgba(0,0,0,.08);
-      --text:       #111827;
-      --sub:        #6b7280;
-      --label:      #374151;
-      --border:     #d1d5db;
-      --input-bg:   #ffffff;
-      --input-text: #111827;
-      --error-bg:   #fef2f2;
-      --error-bd:   #fecaca;
-      --error-tx:   #dc2626;
-      --toggle-bg:  #e5e7eb;
-      --toggle-ico: "🌙";
-    }
-    :root:has(#dark-toggle:checked) {
-      --bg:         #0f1117;
-      --card:       #1a1d27;
-      --shadow:     0 4px 24px rgba(0,0,0,.4);
-      --text:       #f3f4f6;
-      --sub:        #9ca3af;
-      --label:      #d1d5db;
-      --border:     #374151;
-      --input-bg:   #111827;
-      --input-text: #f3f4f6;
-      --error-bg:   #2d1515;
-      --error-bd:   #7f1d1d;
-      --error-tx:   #fca5a5;
-      --toggle-bg:  #374151;
-      --toggle-ico: "☀️";
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      min-height: 100vh;
-      display: flex; align-items: center; justify-content: center;
-      background: var(--bg);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--text);
-      transition: background .25s, color .25s;
-    }
-    #dark-toggle { display: none; }
-    .toggle-btn {
-      position: fixed; top: 16px; right: 16px;
-      width: 38px; height: 38px;
-      background: var(--toggle-bg);
-      border-radius: 50%; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px; transition: background .25s;
-      user-select: none;
-    }
-    .toggle-btn::after { content: var(--toggle-ico); }
-    .card {
-      background: var(--card);
-      border-radius: 14px;
-      box-shadow: var(--shadow);
-      padding: 40px 36px;
-      width: 100%; max-width: 400px;
-      transition: background .25s, box-shadow .25s;
-    }
-    .logo {
-      width: 44px; height: 44px;
-      background: linear-gradient(135deg, #4f46e5, #7c3aed);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      color: #fff; font-weight: 700; font-size: 18px;
-      margin: 0 auto 20px;
-    }
-    h1 { text-align: center; font-size: 22px; font-weight: 600; margin-bottom: 6px; }
-    .sub { text-align: center; font-size: 14px; color: var(--sub); margin-bottom: 28px; }
-    .field-label {
-      display: block; font-size: 13px; font-weight: 500;
-      color: var(--label); margin-bottom: 6px;
-    }
-    input[type=email], input[type=password] {
-      width: 100%; padding: 10px 12px;
-      background: var(--input-bg); color: var(--input-text);
-      border: 1.5px solid var(--border); border-radius: 8px;
-      font-size: 15px; outline: none;
-      transition: border-color .2s, background .25s, color .25s;
-      margin-bottom: 16px;
-    }
-    input[type=email]:focus, input[type=password]:focus { border-color: #4f46e5; }
-    .error {
-      background: var(--error-bg); border: 1px solid var(--error-bd);
-      color: var(--error-tx); border-radius: 8px;
-      padding: 10px 12px; font-size: 13px; margin-bottom: 16px;
-    }
-    .submit-btn {
-      width: 100%; padding: 11px;
-      background: #4f46e5; color: #fff;
-      border: none; border-radius: 8px;
-      font-size: 15px; font-weight: 600; cursor: pointer;
-      transition: background .2s;
-    }
-    .submit-btn:hover { background: #4338ca; }
-  </style>
-</head>
-<body>
-  <input type="checkbox" id="dark-toggle" onchange="localStorage.setItem('theme',this.checked?'dark':'light')">
-  <label class="toggle-btn" for="dark-toggle"></label>
-  <script>
-    (function(){
-      var s=localStorage.getItem('theme');
-      var d=s?s==='dark':window.matchMedia('(prefers-color-scheme:dark)').matches;
-      if(d)document.getElementById('dark-toggle').checked=true;
-    })();
-  </script>
-  <div class="card">
-    <div class="logo">M</div>
-    <h1>Welcome back</h1>
-    <p class="sub">Sign in to continue</p>
-    {{if .Error}}<div class="error">{{.Error}}</div>{{end}}
-    <form method="POST" action="/api/auth/login">
-      <input type="hidden" name="next" value="{{.Next}}">
-      <label class="field-label" for="email">Email</label>
-      <input id="email" type="email" name="email" placeholder="you@example.com" required autofocus>
-      <label class="field-label" for="password">Password</label>
-      <input id="password" type="password" name="password" placeholder="••••••••" required>
-      <button class="submit-btn" type="submit">Sign in</button>
-    </form>
-  </div>
-</body>
-</html>`))
-
-var infoTmpl = template.Must(template.New("info").Parse(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>min-idp</title>
-  <style>
-    :root {
-      --bg:#f5f7fa;--card:#fff;--shadow:0 4px 24px rgba(0,0,0,.08);
-      --text:#111827;--sub:#6b7280;--border:#e5e7eb;
-      --card-header:#f9fafb;--muted:#6b7280;
-      --attr-bg:rgba(238,242,255,.5);--attr-text:#4338ca;
-      --toggle-bg:#e5e7eb;
-    }
-    :root:has(#dark-toggle:checked){
-      --bg:#0f1117;--card:#1a1d27;--shadow:0 4px 24px rgba(0,0,0,.4);
-      --text:#f3f4f6;--sub:#9ca3af;--border:#2d3149;
-      --card-header:#1e2235;--muted:#9ca3af;
-      --attr-bg:rgba(49,46,129,.2);--attr-text:#a5b4fc;
-      --toggle-bg:#374151;
-    }
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-    body{min-height:100vh;display:flex;align-items:center;justify-content:center;
-      background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      color:var(--text);transition:background .25s,color .25s;}
-    #dark-toggle{display:none;}
-    .toggle-btn{position:fixed;top:16px;right:16px;width:38px;height:38px;
-      background:var(--toggle-bg);border-radius:50%;cursor:pointer;
-      display:flex;align-items:center;justify-content:center;font-size:18px;
-      transition:background .25s;user-select:none;}
-    .toggle-btn::after{content:var(--toggle-ico,"🌙");}
-    :root:has(#dark-toggle:checked) .toggle-btn::after{content:"☀️";}
-    .wrap{width:100%;max-width:480px;padding:1rem;}
-    .header{text-align:center;margin-bottom:2rem;}
-    .logo{width:44px;height:44px;background:linear-gradient(135deg,#4f46e5,#7c3aed);
-      border-radius:10px;display:flex;align-items:center;justify-content:center;
-      color:#fff;font-weight:700;font-size:18px;margin:0 auto 16px;}
-    h1{font-size:22px;font-weight:600;margin-bottom:4px;}
-    .sub{font-size:14px;color:var(--muted);}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;
-      box-shadow:var(--shadow);overflow:hidden;margin-bottom:12px;}
-    .card-header{background:var(--card-header);border-bottom:1px solid var(--border);
-      padding:0.6rem 1.25rem;font-size:0.7rem;font-weight:600;text-transform:uppercase;
-      letter-spacing:.05em;color:var(--muted);}
-    .card-body{padding:1rem 1.25rem;}
-    .field{margin-bottom:10px;}
-    .field:last-child{margin-bottom:0;}
-    .field-label{font-size:11px;font-weight:600;text-transform:uppercase;
-      letter-spacing:.05em;color:var(--muted);margin-bottom:3px;}
-    .field-value{font-size:14px;font-family:monospace;word-break:break-all;
-      color:var(--attr-text);}
-    .roles{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
-    .role{font-size:12px;padding:2px 8px;border-radius:99px;
-      background:var(--attr-bg);color:var(--attr-text);font-weight:500;}
-    .status{background:var(--card);border:1px solid var(--border);border-radius:14px;
-      padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;
-      box-shadow:var(--shadow);margin-bottom:12px;}
-    .dot{width:10px;height:10px;border-radius:50%;background:#10b981;
-      box-shadow:0 0 0 4px rgba(16,185,129,.15);margin-right:12px;flex-shrink:0;}
-    .btn-logout{padding:8px 16px;background:var(--border);color:var(--text);
-      border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;
-      transition:opacity .2s;}
-    .btn-logout:hover{opacity:.75;}
-    .sign-in-card{background:var(--card);border:1px solid var(--border);border-radius:14px;
-      box-shadow:var(--shadow);padding:2rem;text-align:center;}
-    .sign-in-card p{color:var(--muted);font-size:14px;margin-bottom:1.25rem;}
-    .btn-login{display:inline-flex;align-items:center;gap:8px;padding:10px 24px;
-      background:#4f46e5;color:#fff;border:none;border-radius:8px;
-      font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;
-      transition:background .2s;}
-    .btn-login:hover{background:#4338ca;}
-  </style>
-</head>
-<body>
-  <input type="checkbox" id="dark-toggle" onchange="localStorage.setItem('theme',this.checked?'dark':'light')">
-  <label class="toggle-btn" for="dark-toggle"></label>
-  <script>
-    (function(){
-      var el=document.getElementById('dark-toggle');
-      var s=localStorage.getItem('theme');
-      var d=s?s==='dark':matchMedia('(prefers-color-scheme:dark)').matches;
-      if(d)el.checked=true;
-    })();
-  </script>
-  <div class="wrap">
-    <div class="header">
-      <div class="logo">M</div>
-      <h1>min-idp</h1>
-      <p class="sub">Identity Provider</p>
-    </div>
-    {{if .Email}}
-      <div class="status">
-        <div style="display:flex;align-items:center">
-          <span class="dot"></span>
-          <div>
-            <div style="font-weight:600;font-size:14px">Signed in</div>
-            <div style="font-size:12px;color:var(--muted)">{{.Email}}</div>
-          </div>
-        </div>
-        <form method="POST" action="/api/auth/logout?redirect=/info" style="margin:0">
-          <button class="btn-logout" type="submit">Sign out</button>
-        </form>
-      </div>
-      <div class="card">
-        <div class="card-header">Session</div>
-        <div class="card-body">
-          <div class="field">
-            <div class="field-label">UUID</div>
-            <div class="field-value">{{.UUID}}</div>
-          </div>
-          <div class="field">
-            <div class="field-label">Email</div>
-            <div class="field-value">{{.Email}}</div>
-          </div>
-          <div class="field">
-            <div class="field-label">Roles</div>
-            <div class="roles">{{range .RoleList}}<span class="role">{{.}}</span>{{end}}</div>
-          </div>
-        </div>
-      </div>
-    {{else}}
-      <div class="sign-in-card">
-        <p>You are not signed in to min-idp.</p>
-        <a class="btn-login" href="/login">
-          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-          </svg>
-          Sign in
-        </a>
-      </div>
-    {{end}}
-  </div>
-</body>
-</html>`))
 
 type AuthnController struct {
 	service     *AuthnService
@@ -322,24 +54,24 @@ func NewAuthnController(
 
 func (c *AuthnController) loginPage(ctx *gin.Context) {
 	ctx.Header("Content-Type", "text/html; charset=utf-8")
-	_ = loginTmpl.Execute(ctx.Writer, map[string]string{"Next": ctx.Query("next"), "Error": ""})
+	_ = views.LoginTmpl.Execute(ctx.Writer, map[string]string{"Next": ctx.Query("next"), "Error": ""})
 }
 
 func (c *AuthnController) infoPage(ctx *gin.Context) {
 	ctx.Header("Content-Type", "text/html; charset=utf-8")
 	cookie, err := ctx.Cookie(c.cfg.SessionCookie)
 	if err != nil {
-		_ = infoTmpl.Execute(ctx.Writer, map[string]interface{}{"Email": ""})
+		_ = views.InfoTmpl.Execute(ctx.Writer, map[string]interface{}{"Email": ""})
 		return
 	}
 	rawJWT, err := c.cookieToken.Decode(cookie)
 	if err != nil {
-		_ = infoTmpl.Execute(ctx.Writer, map[string]interface{}{"Email": ""})
+		_ = views.InfoTmpl.Execute(ctx.Writer, map[string]interface{}{"Email": ""})
 		return
 	}
 	claims, err := jwtPayloadClaims(rawJWT)
 	if err != nil {
-		_ = infoTmpl.Execute(ctx.Writer, map[string]interface{}{"Email": ""})
+		_ = views.InfoTmpl.Execute(ctx.Writer, map[string]interface{}{"Email": ""})
 		return
 	}
 	// Convert roles []interface{} → []string for template range
@@ -351,8 +83,9 @@ func (c *AuthnController) infoPage(ctx *gin.Context) {
 			}
 		}
 	}
-	_ = infoTmpl.Execute(ctx.Writer, map[string]interface{}{
+	_ = views.InfoTmpl.Execute(ctx.Writer, map[string]interface{}{
 		"Email":    claims["email"],
+		"Name":     claims["name"],
 		"UUID":     claims["sub"],
 		"RoleList": roleList,
 	})
@@ -398,7 +131,7 @@ func (c *AuthnController) login(ctx *gin.Context) {
 		return
 	}
 
-	token, err := c.mintToken(ctx, u.ID, u.UUID.String(), sess.UUID.String(), u.Email, sess.ExpiresAt)
+	token, err := c.mintToken(ctx, u.ID, u.UUID.String(), sess.UUID.String(), u.Email, u.Name, sess.ExpiresAt)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
 		return
@@ -415,7 +148,7 @@ func (c *AuthnController) loginForm(ctx *gin.Context) {
 	renderLoginError := func(status int, msg string) {
 		ctx.Status(status)
 		ctx.Header("Content-Type", "text/html; charset=utf-8")
-		_ = loginTmpl.Execute(ctx.Writer, map[string]string{"Next": next, "Error": msg})
+		_ = views.LoginTmpl.Execute(ctx.Writer, map[string]string{"Next": next, "Error": msg})
 	}
 
 	u, err := c.service.Authenticate(email, password)
@@ -434,7 +167,7 @@ func (c *AuthnController) loginForm(ctx *gin.Context) {
 		return
 	}
 
-	token, err := c.mintToken(ctx, u.ID, u.UUID.String(), sess.UUID.String(), u.Email, sess.ExpiresAt)
+	token, err := c.mintToken(ctx, u.ID, u.UUID.String(), sess.UUID.String(), u.Email, u.Name, sess.ExpiresAt)
 	if err != nil {
 		renderLoginError(http.StatusInternalServerError, "Internal error. Please try again.")
 		return
@@ -479,7 +212,7 @@ func (c *AuthnController) register(ctx *gin.Context) {
 	ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented"))
 }
 
-func (c *AuthnController) mintToken(ctx *gin.Context, userID uint, userUUID, sessionUUID, email string, expiresAt time.Time) (string, error) {
+func (c *AuthnController) mintToken(ctx *gin.Context, userID uint, userUUID, sessionUUID, email, name string, expiresAt time.Time) (string, error) {
 	roles, _ := c.rbacSvc.GetUserPermissions(userID)
 
 	key, meta, err := c.ks.ActivePrivateKey(ctx.Request.Context(), keystore_entities.ProtocolOIDC)
@@ -488,7 +221,7 @@ func (c *AuthnController) mintToken(ctx *gin.Context, userID uint, userUUID, ses
 	}
 
 	return MintSessionJWT(key, SigningConfig{KID: meta.KID, Issuer: c.cfg.ExternalURL},
-		userID, userUUID, sessionUUID, email, roles, time.Until(expiresAt))
+		userID, userUUID, sessionUUID, email, name, roles, time.Until(expiresAt))
 }
 
 func (c *AuthnController) extractSessionUUID(ctx *gin.Context) string {

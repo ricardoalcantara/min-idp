@@ -62,7 +62,7 @@ func (c *UserController) create(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, web.NewErrorDto(err))
 		return
 	}
-	u, err := c.service.Create(input.Email, input.Password)
+	u, err := c.service.Create(input.Email, input.Name, input.Password)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
 		return
@@ -89,7 +89,7 @@ func (c *UserController) update(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, web.NewErrorDto(err))
 		return
 	}
-	u, err := c.service.Update(ctx.Param("id"), input.Email, input.Status)
+	u, err := c.service.Update(ctx.Param("id"), input.Email, input.Name, input.Status)
 	if err != nil {
 		if errors.Is(err, db.ErrEntityNotFound) {
 			ctx.JSON(http.StatusNotFound, web.NewErrorDto(err))

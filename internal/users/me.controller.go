@@ -50,6 +50,9 @@ func (c *MeController) update(ctx *gin.Context) {
 	if input.Email != nil {
 		u.Email = *input.Email
 	}
+	if input.Name != nil {
+		u.Name = *input.Name
+	}
 	if err := c.service.repo.Update(u); err != nil {
 		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
 		return

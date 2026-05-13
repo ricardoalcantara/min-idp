@@ -26,6 +26,7 @@ type SPRepository interface {
 	FindOIDCClientByClientID(clientID string) (*sp_entities.OIDCClient, error)
 	UpsertOIDCClient(c *sp_entities.OIDCClient) error
 	GetSAMLClient(spID uint) (*sp_entities.SAMLClient, error)
+	FindSAMLClientByEntityID(entityID string) (*sp_entities.SAMLClient, error)
 	UpsertSAMLClient(c *sp_entities.SAMLClient) error
 	ListAccessRules(spID uint) ([]sp_repositories.AccessRuleRow, error)
 	FindSubjectID(subjectType string, entityID uint) (uint, error)

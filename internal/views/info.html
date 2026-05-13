@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>min-idp</title>
+  <style>
+    :root {
+      --bg:#f5f7fa;--card:#fff;--shadow:0 4px 24px rgba(0,0,0,.08);
+      --text:#111827;--sub:#6b7280;--border:#e5e7eb;
+      --card-header:#f9fafb;--muted:#6b7280;
+      --attr-bg:rgba(238,242,255,.5);--attr-text:#4338ca;
+      --toggle-bg:#e5e7eb;
+    }
+    :root:has(#dark-toggle:checked){
+      --bg:#0f1117;--card:#1a1d27;--shadow:0 4px 24px rgba(0,0,0,.4);
+      --text:#f3f4f6;--sub:#9ca3af;--border:#2d3149;
+      --card-header:#1e2235;--muted:#9ca3af;
+      --attr-bg:rgba(49,46,129,.2);--attr-text:#a5b4fc;
+      --toggle-bg:#374151;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{min-height:100vh;display:flex;align-items:center;justify-content:center;
+      background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--text);transition:background .25s,color .25s;}
+    #dark-toggle{display:none;}
+    .toggle-btn{position:fixed;top:16px;right:16px;width:38px;height:38px;
+      background:var(--toggle-bg);border-radius:50%;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;font-size:18px;
+      transition:background .25s;user-select:none;}
+    .toggle-btn::after{content:var(--toggle-ico,"🌙");}
+    :root:has(#dark-toggle:checked) .toggle-btn::after{content:"☀️";}
+    .wrap{width:100%;max-width:480px;padding:1rem;}
+    .header{text-align:center;margin-bottom:2rem;}
+    .logo{width:44px;height:44px;background:linear-gradient(135deg,#4f46e5,#7c3aed);
+      border-radius:10px;display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:700;font-size:18px;margin:0 auto 16px;}
+    h1{font-size:22px;font-weight:600;margin-bottom:4px;}
+    .sub{font-size:14px;color:var(--muted);}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;
+      box-shadow:var(--shadow);overflow:hidden;margin-bottom:12px;}
+    .card-header{background:var(--card-header);border-bottom:1px solid var(--border);
+      padding:0.6rem 1.25rem;font-size:0.7rem;font-weight:600;text-transform:uppercase;
+      letter-spacing:.05em;color:var(--muted);}
+    .card-body{padding:1rem 1.25rem;}
+    .field{margin-bottom:10px;}
+    .field:last-child{margin-bottom:0;}
+    .field-label{font-size:11px;font-weight:600;text-transform:uppercase;
+      letter-spacing:.05em;color:var(--muted);margin-bottom:3px;}
+    .field-value{font-size:14px;font-family:monospace;word-break:break-all;
+      color:var(--attr-text);}
+    .roles{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+    .role{font-size:12px;padding:2px 8px;border-radius:99px;
+      background:var(--attr-bg);color:var(--attr-text);font-weight:500;}
+    .status{background:var(--card);border:1px solid var(--border);border-radius:14px;
+      padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;
+      box-shadow:var(--shadow);margin-bottom:12px;}
+    .dot{width:10px;height:10px;border-radius:50%;background:#10b981;
+      box-shadow:0 0 0 4px rgba(16,185,129,.15);margin-right:12px;flex-shrink:0;}
+    .btn-logout{padding:8px 16px;background:var(--border);color:var(--text);
+      border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;
+      transition:opacity .2s;}
+    .btn-logout:hover{opacity:.75;}
+    .sign-in-card{background:var(--card);border:1px solid var(--border);border-radius:14px;
+      box-shadow:var(--shadow);padding:2rem;text-align:center;}
+    .sign-in-card p{color:var(--muted);font-size:14px;margin-bottom:1.25rem;}
+    .btn-login{display:inline-flex;align-items:center;gap:8px;padding:10px 24px;
+      background:#4f46e5;color:#fff;border:none;border-radius:8px;
+      font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;
+      transition:background .2s;}
+    .btn-login:hover{background:#4338ca;}
+  </style>
+</head>
+<body>
+  <input type="checkbox" id="dark-toggle" onchange="localStorage.setItem('theme',this.checked?'dark':'light')">
+  <label class="toggle-btn" for="dark-toggle"></label>
+  <script>
+    (function(){
+      var el=document.getElementById('dark-toggle');
+      var s=localStorage.getItem('theme');
+      var d=s?s==='dark':matchMedia('(prefers-color-scheme:dark)').matches;
+      if(d)el.checked=true;
+    })();
+  </script>
+  <div class="wrap">
+    <div class="header">
+      <div class="logo">M</div>
+      <h1>min-idp</h1>
+      <p class="sub">Identity Provider</p>
+    </div>
+    {{if .Email}}
+      <div class="status">
+        <div style="display:flex;align-items:center">
+          <span class="dot"></span>
+          <div>
+            <div style="font-weight:600;font-size:14px">{{if .Name}}{{.Name}}{{else}}Signed in{{end}}</div>
+            <div style="font-size:12px;color:var(--muted)">{{.Email}}</div>
+          </div>
+        </div>
+        <form method="POST" action="/api/auth/logout?redirect=/info" style="margin:0">
+          <button class="btn-logout" type="submit">Sign out</button>
+        </form>
+      </div>
+      <div class="card">
+        <div class="card-header">Session</div>
+        <div class="card-body">
+          <div class="field">
+            <div class="field-label">UUID</div>
+            <div class="field-value">{{.UUID}}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Name</div>
+            <div class="field-value">{{if .Name}}{{.Name}}{{else}}—{{end}}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Email</div>
+            <div class="field-value">{{.Email}}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Roles</div>
+            <div class="roles">{{range .RoleList}}<span class="role">{{.}}</span>{{end}}</div>
+          </div>
+        </div>
+      </div>
+    {{else}}
+      <div class="sign-in-card">
+        <p>You are not signed in to min-idp.</p>
+        <a class="btn-login" href="/login">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+          </svg>
+          Sign in
+        </a>
+      </div>
+    {{end}}
+  </div>
+</body>
+</html>

@@ -10,9 +10,9 @@ http:
     type: json
     data: |-
       {
-        "entity_id": "https://app.example.com/saml",
-        "acs_urls": ["https://app.example.com/saml/acs"],
-        "slo_url": "https://app.example.com/saml/slo",
+        "entity_id": "http://localhost:3002",
+        "acs_urls": ["http://localhost:3002/api/auth/saml/callback"],
+        "slo_url": "http://localhost:3002/api/auth/saml/logout",
         "name_id_format": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
         "want_signed_assertions": true,
         "want_signed_requests": false

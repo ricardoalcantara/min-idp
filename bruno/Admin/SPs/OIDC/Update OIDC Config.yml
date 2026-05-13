@@ -13,8 +13,7 @@ http:
         "client_id": "my-app-client",
         "client_secret": "super-secret",
         "redirect_uris": [
-          "http://localhost:3000/api/auth/callback/min-idp",
-          "http://localhost:3001/api/auth/callback/min-idp"
+          "http://localhost:3001/api/auth/oidc/callback"
         ],
         "grant_types": [
           "authorization_code"

@@ -1,5 +1,4 @@
-import { auth, signIn, signOut, buildLogoutUrl } from "@/auth"
-import { headers } from "next/headers"
+import { getSession } from "@/lib/session"
 
 const S = {
   page:      { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" } as React.CSSProperties,
@@ -22,9 +21,8 @@ const S = {
 }
 
 export default async function Home() {
-  const session = await auth()
-  const hdrs = await headers()
-  const baseUrl = `${hdrs.get("x-forwarded-proto") ?? "http"}://${hdrs.get("host") ?? "localhost:3001"}`
+  const session = await getSession()
+  const user = session.user
 
   return (
     <div style={S.page}>
@@ -50,18 +48,16 @@ export default async function Home() {
           <p style={S.sub}>OIDC · PKCE · State · Nonce</p>
         </div>
 
-        {!session ? (
+        {!user ? (
           <div style={{ ...S.card, textAlign: "center", padding: "2.5rem 2rem" }}>
             <p style={{ marginBottom: "0.5rem", fontWeight: 600 }}>Sign in to continue</p>
             <p style={{ ...S.sub, marginBottom: "1.5rem" }}>Authenticate via OIDC to inspect your tokens.</p>
-            <form action={async () => { "use server"; await signIn("min-idp") }}>
-              <button type="submit" style={S.loginBtn}>
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                </svg>
-                Sign in with OIDC
-              </button>
-            </form>
+            <a href="/api/auth/oidc/login" style={S.loginBtn}>
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+              Sign in with OIDC
+            </a>
           </div>
         ) : (
           <>
@@ -70,22 +66,10 @@ export default async function Home() {
                 <span style={S.dot} />
                 <div>
                   <div style={{ fontWeight: 600, fontSize: "0.9rem" }}>Authenticated</div>
-                  <div style={{ ...S.sub, fontSize: "0.8rem" }}>{session.user?.email}</div>
+                  <div style={{ ...S.sub, fontSize: "0.8rem" }}>{user.email}</div>
                 </div>
               </div>
-              <form action={async () => {
-                "use server"
-                // @ts-expect-error Session property extension
-                const idToken = session?.idToken as string | undefined
-                if (idToken) {
-                  await signOut({ redirect: false })
-                  const logoutUrl = await buildLogoutUrl(idToken, baseUrl)
-                  const { redirect } = await import("next/navigation")
-                  redirect(logoutUrl)
-                } else {
-                  await signOut()
-                }
-              }}>
+              <form method="POST" action="/api/auth/oidc/logout">
                 <button type="submit" style={S.logoutBtn}>Sign out</button>
               </form>
             </div>
@@ -96,8 +80,7 @@ export default async function Home() {
                 <span style={S.badge("99,102,241")}>JWT</span>
               </div>
               <pre style={S.pre("--code-bg", "--code-text")}>
-                {/* @ts-expect-error Session property extension */}
-                {session?.idToken || "No ID Token returned"}
+                {user.idToken || "No ID Token returned"}
               </pre>
             </div>
 
@@ -107,7 +90,7 @@ export default async function Home() {
                   <span style={S.label}>Session Profile</span>
                 </div>
                 <pre style={S.pre("--attr-bg", "--attr-text")}>
-                  {JSON.stringify(session?.user, null, 2)}
+                  {JSON.stringify({ sub: user.sub, email: user.email, name: user.name, roles: user.roles }, null, 2)}
                 </pre>
               </div>
 
@@ -116,8 +99,7 @@ export default async function Home() {
                   <span style={S.label}>Access Token</span>
                 </div>
                 <pre style={S.pre("--amber-bg", "--amber-text")}>
-                  {/* @ts-expect-error Session property extension */}
-                  {session?.accessToken || "No Access Token returned"}
+                  {user.accessToken || "No Access Token returned"}
                 </pre>
               </div>
             </div>

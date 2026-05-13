@@ -27,6 +27,7 @@ type SessionClaims struct {
 	UserUUID    string
 	UserID      uint
 	Email       string
+	Name        string
 	Roles       []string
 	ExpiresAt   time.Time
 }
@@ -159,6 +160,7 @@ func validateJWT(ctx context.Context, tokenStr string, ks keystore.KeyStore, kv 
 
 	userUUID, _ := mapClaims["sub"].(string)
 	email, _ := mapClaims["email"].(string)
+	name, _  := mapClaims["name"].(string)
 
 	var userID uint
 	if uid, ok := mapClaims["uid"].(float64); ok {
@@ -184,6 +186,7 @@ func validateJWT(ctx context.Context, tokenStr string, ks keystore.KeyStore, kv 
 		UserUUID:    userUUID,
 		UserID:      userID,
 		Email:       email,
+		Name:        name,
 		Roles:       roles,
 		ExpiresAt:   expiresAt,
 	}, nil
@@ -202,5 +205,12 @@ func RequireSession() gin.HandlerFunc {
 func FromContext(c *gin.Context) *SessionClaims {
 	raw, _ := c.Get("session")
 	claims, _ := raw.(*SessionClaims)
+	return claims
+}
+
+// FromRequest extracts SessionClaims from a plain http.Request context.
+// Used by non-gin handlers such as crewjam/saml's SessionProvider.
+func FromRequest(r *http.Request) *SessionClaims {
+	claims, _ := r.Context().Value(contextKey{}).(*SessionClaims)
 	return claims
 }

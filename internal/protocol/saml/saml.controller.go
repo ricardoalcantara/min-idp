@@ -1,25 +1,33 @@
 package saml
 
 import (
+	"context"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"encoding/xml"
 	"errors"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-minstack/web"
+	crewjam "github.com/crewjam/saml"
 	"github.com/ricardoalcantara/min-idp/internal/config"
 	"github.com/ricardoalcantara/min-idp/internal/keystore"
 	keystore_entities "github.com/ricardoalcantara/min-idp/internal/keystore/entities"
+	"github.com/ricardoalcantara/min-idp/internal/views"
 )
 
 type SAMLController struct {
-	ks  keystore.KeyStore
-	cfg *config.Config
+	samlSvc *SAMLService
+	ks      keystore.KeyStore
+	cfg     *config.Config
 }
 
-func NewSAMLController(ks keystore.KeyStore, cfg *config.Config) *SAMLController {
-	return &SAMLController{ks: ks, cfg: cfg}
+func NewSAMLController(samlSvc *SAMLService, ks keystore.KeyStore, cfg *config.Config) *SAMLController {
+	return &SAMLController{samlSvc: samlSvc, ks: ks, cfg: cfg}
 }
 
 func (c *SAMLController) metadata(ctx *gin.Context) {
@@ -46,7 +54,7 @@ func (c *SAMLController) metadata(ctx *gin.Context) {
 			WantAuthnRequestsSigned:    false,
 			ProtocolSupportEnumeration: "urn:oasis:names:tc:SAML:2.0:protocol",
 			KeyDescriptors: []keyDescriptor{{
-				Use: "signing",
+				Use:     "signing",
 				KeyInfo: keyInfo{X509Data: x509Data{X509Certificate: cert}},
 			}},
 			SingleSignOnServices: []singleSignOnService{
@@ -67,10 +75,72 @@ func (c *SAMLController) metadata(ctx *gin.Context) {
 	ctx.Data(http.StatusOK, "application/samlmetadata+xml", append([]byte(xml.Header), out...))
 }
 
-func (c *SAMLController) sso(ctx *gin.Context) { ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented")) }
-func (c *SAMLController) slo(ctx *gin.Context) { ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented")) }
+func (c *SAMLController) sso(ctx *gin.Context) {
+	idp, err := c.buildIDP(ctx.Request.Context())
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
+		return
+	}
+	idp.ServeSSO(ctx.Writer, ctx.Request)
+}
 
-// XML types
+func (c *SAMLController) slo(ctx *gin.Context) {
+	// Full SP-initiated SLO (SAMLRequest) is out of scope for v1.
+	// Handle the simple redirect case: SP clears its session and sends the user
+	// here with RelayState (return URL) and entity_id so we can show the logout page.
+	relayState := ctx.Query("RelayState")
+	entityID := ctx.Query("entity_id")
+
+	spName := c.samlSvc.SPNameByEntityID(entityID)
+
+	ctx.Header("Content-Type", "text/html; charset=utf-8")
+	_ = views.LogoutTmpl.Execute(ctx.Writer, map[string]any{
+		"SPName":    spName,
+		"ReturnURL": relayState,
+	})
+}
+
+func (c *SAMLController) buildIDP(ctx context.Context) (*crewjam.IdentityProvider, error) {
+	key, _, err := c.ks.ActivePrivateKey(ctx, keystore_entities.ProtocolSAML)
+	if err != nil {
+		return nil, err
+	}
+	rsaKey, ok := key.(*rsa.PrivateKey)
+	if !ok {
+		return nil, errors.New("saml: signing key is not RSA")
+	}
+
+	keys, err := c.ks.PublicKeys(ctx, keystore_entities.ProtocolSAML)
+	if err != nil || len(keys) == 0 {
+		return nil, errors.New("saml: no public key available")
+	}
+	certPEM := keys[0].Certificate
+	block, _ := pem.Decode([]byte(certPEM))
+	if block == nil {
+		return nil, errors.New("saml: invalid certificate PEM")
+	}
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	metaURL, _ := url.Parse(c.cfg.ExternalURL + "/saml/metadata")
+	ssoURL, _ := url.Parse(c.cfg.ExternalURL + "/saml/sso")
+	sloURL, _ := url.Parse(c.cfg.ExternalURL + "/saml/slo")
+
+	return &crewjam.IdentityProvider{
+		Key:                  rsaKey,
+		Certificate:          cert,
+		MetadataURL:          *metaURL,
+		SSOURL:               *ssoURL,
+		LogoutURL:            *sloURL,
+		ServiceProviderProvider: c.samlSvc,
+		SessionProvider:      c.samlSvc,
+	}, nil
+}
+
+// XML types for metadata endpoint
+
 type entityDescriptor struct {
 	XMLName          xml.Name         `xml:"urn:oasis:names:tc:SAML:2.0:metadata EntityDescriptor"`
 	EntityID         string           `xml:"entityID,attr"`

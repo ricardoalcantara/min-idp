@@ -13,8 +13,8 @@ http:
     type: json
     data: |-
       {
-        "slug": "my-saml-app",
-        "name": "My SAML Application",
+        "slug": "saml-test-sp",
+        "name": "SAML Test SP",
         "protocol": "saml"
       }
 

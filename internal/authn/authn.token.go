@@ -21,6 +21,7 @@ type sessionClaims struct {
 	UserID      uint     `json:"uid"`
 	SessionUUID string   `json:"sid"`
 	Email       string   `json:"email"`
+	Name        string   `json:"name,omitempty"`
 	Roles       []string `json:"roles"`
 }
 
@@ -30,7 +31,7 @@ func MintSessionJWT(
 	key crypto.PrivateKey,
 	cfg SigningConfig,
 	userID uint,
-	userUUID, sessionUUID, email string,
+	userUUID, sessionUUID, email, name string,
 	roles []string,
 	expiry time.Duration,
 ) (string, error) {
@@ -46,6 +47,7 @@ func MintSessionJWT(
 		UserID:      userID,
 		SessionUUID: sessionUUID,
 		Email:       email,
+		Name:        name,
 		Roles:       roles,
 	}
 

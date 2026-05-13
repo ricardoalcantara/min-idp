@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
     deleted_at DATETIME,
     uuid          TEXT NOT NULL UNIQUE,
     email         TEXT NOT NULL UNIQUE,
+    name          TEXT,
     password_hash TEXT NOT NULL,
     status        TEXT NOT NULL DEFAULT 'active'
 );

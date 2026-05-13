@@ -29,3 +29,4 @@ export function createSAML() {
 
 export const spEntityId = () => process.env.SAML_SP_ENTITY_ID ?? "http://localhost:3002"
 export const spCert     = () => parsePem(process.env.SAML_SP_CERT ?? "")
+export const idpSloUrl  = () => process.env.SAML_IDP_SLO_URL ?? ""

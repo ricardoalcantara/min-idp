@@ -8,6 +8,7 @@ import (
 type User struct {
 	db.Model
 	Email        string               `gorm:"uniqueIndex;not null"`
+	Name         string
 	PasswordHash string               `gorm:"not null"`
 	Status       string               `gorm:"default:'active'"`
 	Roles        []rbac_entities.Role `gorm:"many2many:user_roles;"`

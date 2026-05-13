@@ -47,6 +47,7 @@ type AuthCodeData struct {
 	UserID              uint   `json:"user_id"`
 	UserUUID            string `json:"user_uuid"`
 	Email               string `json:"email"`
+	Name                string `json:"name"`
 	SessionUUID         string `json:"session_uuid"`
 	RedirectURI         string `json:"redirect_uri"`
 	Scope               string `json:"scope"`
@@ -173,7 +174,7 @@ func (s *OIDCService) ExchangeCode(ctx context.Context, req oidc_dto.TokenReques
 		}
 	}
 
-	return s.issueTokens(ctx, client, data.UserID, data.UserUUID, data.Email, data.SessionUUID, data.Scope, data.Nonce, nil)
+	return s.issueTokens(ctx, client, data.UserID, data.UserUUID, data.Email, data.Name, data.SessionUUID, data.Scope, data.Nonce, nil)
 }
 
 // ExchangeRefreshToken performs the refresh token grant.
@@ -198,7 +199,7 @@ func (s *OIDCService) ExchangeRefreshToken(ctx context.Context, req oidc_dto.Tok
 	// We can decode the user UUID from session or fetch it. We will just pass an empty string for now, but
 	// ID token might need it.
 
-	return s.issueTokens(ctx, client, token.UserID, "", "", token.SessionUUID, token.Scope, "", &token.ID)
+	return s.issueTokens(ctx, client, token.UserID, "", "", "", token.SessionUUID, token.Scope, "", &token.ID)
 }
 
 func (s *OIDCService) issueTokens(
@@ -207,6 +208,7 @@ func (s *OIDCService) issueTokens(
 	userID uint,
 	userUUID string,
 	email string,
+	name string,
 	sessionUUID string,
 	scope string,
 	nonce string,
@@ -260,7 +262,7 @@ func (s *OIDCService) issueTokens(
 	// Issue ID Token if openid scope is present
 	var idTokenStr string
 	if strings.Contains(scope, "openid") {
-		idTokenStr, err = s.mintIDToken(ctx, client.ClientID, userUUID, email, nonce, roles, 1*time.Hour)
+		idTokenStr, err = s.mintIDToken(ctx, client.ClientID, userUUID, email, name, nonce, roles, 1*time.Hour)
 		if err != nil {
 			return nil, err
 		}
@@ -337,15 +339,13 @@ func (s *OIDCService) GetUserInfo(ctx context.Context, accessToken string) (*oid
 	sub, _   := claims["sub"].(string)
 	email, _ := claims["email"].(string)
 
-	var roles string
+	var roles []string
 	if rArr, ok := claims["roles"].([]interface{}); ok {
-		var strRoles []string
 		for _, v := range rArr {
 			if s, ok := v.(string); ok {
-				strRoles = append(strRoles, s)
+				roles = append(roles, s)
 			}
 		}
-		roles = strings.Join(strRoles, ",")
 	}
 
 	return &oidc_dto.UserInfoResponse{
@@ -372,7 +372,7 @@ func (s *OIDCService) mintAccessToken(ctx context.Context, clientID, jti string,
 	return s.signClaims(ctx, claims)
 }
 
-func (s *OIDCService) mintIDToken(ctx context.Context, clientID, userUUID, email, nonce string, roles []string, expiry time.Duration) (string, error) {
+func (s *OIDCService) mintIDToken(ctx context.Context, clientID, userUUID, email, name, nonce string, roles []string, expiry time.Duration) (string, error) {
 	now := time.Now()
 	claims := jwt.MapClaims{
 		"iss":   s.cfg.ExternalURL,
@@ -385,6 +385,11 @@ func (s *OIDCService) mintIDToken(ctx context.Context, clientID, userUUID, email
 
 	if email != "" {
 		claims["email"] = email
+	}
+	if name != "" {
+		claims["name"] = name
+	} else if email != "" {
+		claims["name"] = email
 	}
 	if nonce != "" {
 		claims["nonce"] = nonce

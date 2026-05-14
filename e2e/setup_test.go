@@ -120,7 +120,7 @@ func (a *testApp) request(t *testing.T, method, path string, body any, headers .
 func (a *testApp) mustLogin(t *testing.T, email, password string) string {
 	t.Helper()
 	w := a.request(t, http.MethodPost, "/api/auth/login", map[string]any{
-		"email":    email,
+		"login":    email,
 		"password": password,
 	})
 	require.Equal(t, http.StatusOK, w.Code)

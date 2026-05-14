@@ -8,13 +8,6 @@ const (
 	UserStatusLocked   UserStatus = "locked"
 )
 
-type KeyStatus string
-
-const (
-	KeyStatusActive   KeyStatus = "active"
-	KeyStatusPrevious KeyStatus = "previous"
-	KeyStatusRetired  KeyStatus = "retired"
-)
 
 type SPProtocol string
 

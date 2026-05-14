@@ -6,6 +6,7 @@ import (
 
 	"github.com/ricardoalcantara/min-idp/internal/crypto"
 	"github.com/ricardoalcantara/min-idp/internal/db"
+	"github.com/ricardoalcantara/min-idp/internal/types"
 	user_entities "github.com/ricardoalcantara/min-idp/internal/users/entities"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,7 +22,8 @@ type mockUserRepo struct {
 func (m *mockUserRepo) Create(u *user_entities.User) error               { return m.err }
 func (m *mockUserRepo) FindByID(_ uint) (*user_entities.User, error)     { return m.user, m.err }
 func (m *mockUserRepo) FindByUUID(_ string) (*user_entities.User, error)  { return m.user, m.err }
-func (m *mockUserRepo) FindByEmail(_ string) (*user_entities.User, error) { return m.user, m.err }
+func (m *mockUserRepo) FindByEmail(_ string) (*user_entities.User, error)    { return m.user, m.err }
+func (m *mockUserRepo) FindByUsername(_ string) (*user_entities.User, error) { return m.user, m.err }
 func (m *mockUserRepo) Update(_ *user_entities.User) error               { return m.err }
 func (m *mockUserRepo) List(_, _ int) ([]*user_entities.User, int64, error) {
 	if m.user != nil {
@@ -39,16 +41,16 @@ func newTestUserSvc(repo UserRepository) *UserService {
 
 func TestUserService_Create_Success(t *testing.T) {
 	svc := newTestUserSvc(&mockUserRepo{})
-	u, err := svc.Create("a@b.com", "", "secret")
+	u, err := svc.Create("a@b.com", "", "", "secret")
 	require.NoError(t, err)
 	assert.Equal(t, "a@b.com", u.Email)
-	assert.Equal(t, "active", u.Status)
+	assert.Equal(t, types.UserStatusActive, u.Status)
 }
 
 func TestUserService_Create_RepoError(t *testing.T) {
 	repoErr := errors.New("db down")
 	svc := newTestUserSvc(&mockUserRepo{err: repoErr})
-	_, err := svc.Create("a@b.com", "", "secret")
+	_, err := svc.Create("a@b.com", "", "", "secret")
 	assert.ErrorIs(t, err, repoErr)
 }
 

@@ -42,21 +42,8 @@ func (c *MeController) update(ctx *gin.Context) {
 		return
 	}
 	claims := session.FromContext(ctx)
-	u, err := c.service.FindByID(claims.UserID)
+	u, err := c.service.UpdateMe(claims.UserID, input.Email, input.Username, input.Name)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
-		return
-	}
-	if input.Email != nil {
-		u.Email = *input.Email
-	}
-	if input.Username != nil {
-		u.Username = *input.Username
-	}
-	if input.Name != nil {
-		u.Name = *input.Name
-	}
-	if err := c.service.repo.Update(u); err != nil {
 		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
 		return
 	}

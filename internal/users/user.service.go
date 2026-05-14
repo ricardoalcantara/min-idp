@@ -5,6 +5,7 @@ import (
 
 	"github.com/ricardoalcantara/min-idp/internal/crypto"
 	"github.com/ricardoalcantara/min-idp/internal/db"
+	"github.com/ricardoalcantara/min-idp/internal/types"
 	user_entities "github.com/ricardoalcantara/min-idp/internal/users/entities"
 )
 
@@ -40,7 +41,7 @@ func (s *UserService) Create(email, username, name, password string) (*user_enti
 		Username:     username,
 		Name:         name,
 		PasswordHash: hash,
-		Status:       "active",
+		Status:       types.UserStatusActive,
 	}
 	if err := s.repo.Create(u); err != nil {
 		return nil, err
@@ -71,7 +72,7 @@ func (s *UserService) Authenticate(login, password string) (*user_entities.User,
 		}
 		return nil, err
 	}
-	if u.Status != "active" {
+	if u.Status != types.UserStatusActive {
 		return nil, ErrAccountNotActive
 	}
 	if err := crypto.VerifyPassword(u.PasswordHash, password); err != nil {
@@ -105,7 +106,7 @@ func (s *UserService) Update(uuid string, email, username, name, status *string)
 		u.Name = *name
 	}
 	if status != nil {
-		u.Status = *status
+		u.Status = types.UserStatus(*status)
 	}
 	return u, s.repo.Update(u)
 }
@@ -116,6 +117,23 @@ func (s *UserService) Delete(uuid string) error {
 		return err
 	}
 	return s.repo.Delete(u.ID)
+}
+
+func (s *UserService) UpdateMe(id uint, email, username, name *string) (*user_entities.User, error) {
+	u, err := s.repo.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if email != nil {
+		u.Email = *email
+	}
+	if username != nil {
+		u.Username = *username
+	}
+	if name != nil {
+		u.Name = *name
+	}
+	return u, s.repo.Update(u)
 }
 
 func (s *UserService) UpdatePassword(userID uint, newPassword string) error {

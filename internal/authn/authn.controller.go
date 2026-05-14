@@ -1,8 +1,6 @@
 package authn
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -12,6 +10,7 @@ import (
 	"github.com/go-minstack/web"
 	authn_dto "github.com/ricardoalcantara/min-idp/internal/authn/dto"
 	"github.com/ricardoalcantara/min-idp/internal/config"
+	"github.com/ricardoalcantara/min-idp/internal/jwtutil"
 	"github.com/ricardoalcantara/min-idp/internal/keystore"
 	keystore_entities "github.com/ricardoalcantara/min-idp/internal/keystore/entities"
 	"github.com/ricardoalcantara/min-idp/internal/kvstore"
@@ -74,7 +73,7 @@ func (c *AuthnController) infoPage(ctx *gin.Context) {
 		ctx.Redirect(http.StatusFound, "/")
 		return
 	}
-	claims, err := jwtPayloadClaims(rawJWT)
+	claims, err := jwtutil.PayloadClaims(rawJWT)
 	if err != nil {
 		ctx.Redirect(http.StatusFound, "/")
 		return
@@ -111,7 +110,7 @@ func (c *AuthnController) login(ctx *gin.Context) {
 
 	u, err := c.service.Authenticate(input.Login, input.Password)
 	if err != nil {
-		if errors.Is(err, ErrInvalidCredentials) {
+		if errors.Is(err, errInvalidCredentials) {
 			ctx.JSON(http.StatusUnauthorized, web.NewErrorDto(err))
 			return
 		}
@@ -158,7 +157,7 @@ func (c *AuthnController) loginForm(ctx *gin.Context) {
 
 	u, err := c.service.Authenticate(login, password)
 	if err != nil {
-		if errors.Is(err, ErrInvalidCredentials) {
+		if errors.Is(err, errInvalidCredentials) {
 			renderLoginError(http.StatusUnauthorized, "Invalid credentials.")
 		} else {
 			renderLoginError(http.StatusInternalServerError, "Internal error. Please try again.")
@@ -232,7 +231,7 @@ func (c *AuthnController) mintToken(ctx *gin.Context, userID uint, userUUID, ses
 func (c *AuthnController) extractSessionUUID(ctx *gin.Context) string {
 	if cookie, err := ctx.Cookie(c.cfg.SessionCookie); err == nil {
 		if rawJWT, err := c.cookieToken.Decode(cookie); err == nil {
-			if claims, err := jwtPayloadClaims(rawJWT); err == nil {
+			if claims, err := jwtutil.PayloadClaims(rawJWT); err == nil {
 				if sid, ok := claims["sid"].(string); ok {
 					return sid
 				}
@@ -241,7 +240,7 @@ func (c *AuthnController) extractSessionUUID(ctx *gin.Context) string {
 	}
 	if auth := ctx.GetHeader("Authorization"); strings.HasPrefix(auth, "Bearer ") {
 		token := strings.TrimPrefix(auth, "Bearer ")
-		if claims, err := jwtPayloadClaims(token); err == nil {
+		if claims, err := jwtutil.PayloadClaims(token); err == nil {
 			if sid, ok := claims["sid"].(string); ok {
 				return sid
 			}
@@ -250,21 +249,3 @@ func (c *AuthnController) extractSessionUUID(ctx *gin.Context) string {
 	return ""
 }
 
-// jwtPayloadClaims decodes the JWT payload without verifying the signature.
-// Used only for display (infoPage) and logout SID extraction —
-// the middleware already verified the signature before the handler runs.
-func jwtPayloadClaims(tokenStr string) (map[string]interface{}, error) {
-	parts := strings.Split(tokenStr, ".")
-	if len(parts) != 3 {
-		return nil, errors.New("invalid jwt format")
-	}
-	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
-	if err != nil {
-		return nil, err
-	}
-	var claims map[string]interface{}
-	if err := json.Unmarshal(payload, &claims); err != nil {
-		return nil, err
-	}
-	return claims, nil
-}

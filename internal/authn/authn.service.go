@@ -7,7 +7,7 @@ import (
 	user_entities "github.com/ricardoalcantara/min-idp/internal/users/entities"
 )
 
-var ErrInvalidCredentials = errors.New("invalid credentials")
+var errInvalidCredentials = errors.New("invalid credentials")
 
 type UserAuthenticator interface {
 	Authenticate(email, password string) (*user_entities.User, error)
@@ -25,7 +25,7 @@ func (s *AuthnService) Authenticate(email, password string) (*user_entities.User
 	u, err := s.users.Authenticate(email, password)
 	if err != nil {
 		if errors.Is(err, users.ErrInvalidCredentials) || errors.Is(err, users.ErrAccountNotActive) {
-			return nil, ErrInvalidCredentials
+			return nil, errInvalidCredentials
 		}
 		return nil, err
 	}

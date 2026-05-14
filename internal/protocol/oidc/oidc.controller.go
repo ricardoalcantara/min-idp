@@ -3,13 +3,13 @@ package oidc
 import (
 	"crypto/ecdsa"
 	"crypto/rsa"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/ricardoalcantara/min-idp/internal/jwtutil"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-minstack/web"
@@ -268,7 +268,7 @@ func (c *OIDCController) logout(ctx *gin.Context) {
 	// Resolve SP display name from id_token_hint audience
 	spName := "the application"
 	if idTokenHint != "" {
-		if claims, err := jwtPayloadClaims(idTokenHint); err == nil {
+		if claims, err := jwtutil.PayloadClaims(idTokenHint); err == nil {
 			if aud, ok := claims["aud"].(string); ok && aud != "" {
 				if client, err := c.service.spRepo.FindOIDCClientByClientID(aud); err == nil {
 					if spEntity, err := c.service.spRepo.FindByID(client.SPID); err == nil {
@@ -290,7 +290,7 @@ func (c *OIDCController) extractSessionUUIDFromToken(tokenStr string) string {
 	if tokenStr == "" {
 		return ""
 	}
-	claims, err := jwtPayloadClaims(tokenStr)
+	claims, err := jwtutil.PayloadClaims(tokenStr)
 	if err != nil {
 		return ""
 	}
@@ -298,19 +298,3 @@ func (c *OIDCController) extractSessionUUIDFromToken(tokenStr string) string {
 	return sid
 }
 
-// jwtPayloadClaims decodes the JWT payload without verifying the signature.
-func jwtPayloadClaims(tokenStr string) (map[string]any, error) {
-	parts := strings.Split(tokenStr, ".")
-	if len(parts) != 3 {
-		return nil, errors.New("invalid jwt")
-	}
-	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
-	if err != nil {
-		return nil, err
-	}
-	var claims map[string]any
-	if err := json.Unmarshal(payload, &claims); err != nil {
-		return nil, err
-	}
-	return claims, nil
-}

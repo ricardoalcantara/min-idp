@@ -38,13 +38,13 @@ func TestAuthnService_Authenticate_Success(t *testing.T) {
 func TestAuthnService_Authenticate_InvalidCredentials(t *testing.T) {
 	svc := newTestAuthnSvc(&mockUserAuthenticator{err: users.ErrInvalidCredentials})
 	_, err := svc.Authenticate("a@b.com", "wrong")
-	assert.ErrorIs(t, err, ErrInvalidCredentials)
+	assert.ErrorIs(t, err, errInvalidCredentials)
 }
 
 func TestAuthnService_Authenticate_AccountNotActive(t *testing.T) {
 	svc := newTestAuthnSvc(&mockUserAuthenticator{err: users.ErrAccountNotActive})
 	_, err := svc.Authenticate("a@b.com", "pass")
-	assert.ErrorIs(t, err, ErrInvalidCredentials)
+	assert.ErrorIs(t, err, errInvalidCredentials)
 }
 
 func TestAuthnService_Authenticate_InfraError(t *testing.T) {
@@ -52,5 +52,5 @@ func TestAuthnService_Authenticate_InfraError(t *testing.T) {
 	svc := newTestAuthnSvc(&mockUserAuthenticator{err: infraErr})
 	_, err := svc.Authenticate("a@b.com", "pass")
 	assert.ErrorIs(t, err, infraErr)
-	assert.NotErrorIs(t, err, ErrInvalidCredentials)
+	assert.NotErrorIs(t, err, errInvalidCredentials)
 }

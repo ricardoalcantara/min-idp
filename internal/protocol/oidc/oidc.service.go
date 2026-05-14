@@ -25,6 +25,7 @@ import (
 	"github.com/ricardoalcantara/min-idp/internal/sp"
 	sp_entities "github.com/ricardoalcantara/min-idp/internal/sp/entities"
 	sp_repositories "github.com/ricardoalcantara/min-idp/internal/sp/repositories"
+	"github.com/ricardoalcantara/min-idp/internal/users"
 )
 
 var (
@@ -41,6 +42,7 @@ type OAuthTokenRepository interface {
 	FindByHash(hash string) (*oidc_entities.OAuthToken, error)
 	RevokeToken(hash string) error
 }
+
 
 type AuthCodeData struct {
 	ClientID            string `json:"client_id"`
@@ -60,6 +62,7 @@ type AuthCodeData struct {
 type OIDCService struct {
 	tokenRepo OAuthTokenRepository
 	spRepo    sp.SPRepository
+	userRepo  users.UserRepository
 	kv        kvstore.KVStore
 	ks        keystore.KeyStore
 	cfg       *config.Config
@@ -69,6 +72,7 @@ type OIDCService struct {
 func NewOIDCService(
 	tokenRepo OAuthTokenRepository,
 	spRepo sp.SPRepository,
+	userRepo users.UserRepository,
 	kv kvstore.KVStore,
 	ks keystore.KeyStore,
 	cfg *config.Config,
@@ -77,6 +81,7 @@ func NewOIDCService(
 	return &OIDCService{
 		tokenRepo: tokenRepo,
 		spRepo:    spRepo,
+		userRepo:  userRepo,
 		kv:        kv,
 		ks:        ks,
 		cfg:       cfg,
@@ -195,12 +200,12 @@ func (s *OIDCService) ExchangeRefreshToken(ctx context.Context, req oidc_dto.Tok
 	// Revoke old refresh token (refresh token rotation)
 	_ = s.tokenRepo.RevokeToken(tokenHash)
 
-	// Fetch user UUID (would need UserRepo in real life or we just store userUUID in token)
-	// For now we'll just pass empty or we can add UserUUID to OAuthToken. Let's assume we need to pass userUUID.
-	// We can decode the user UUID from session or fetch it. We will just pass an empty string for now, but
-	// ID token might need it.
+	u, err := s.userRepo.FindByID(token.UserID)
+	if err != nil {
+		return nil, err
+	}
 
-	return s.issueTokens(ctx, client, token.UserID, "", "", "", "", token.SessionUUID, token.Scope, "", &token.ID)
+	return s.issueTokens(ctx, client, token.UserID, u.UUID.String(), u.Email, u.Username, u.Name, token.SessionUUID, token.Scope, "", &token.ID)
 }
 
 func (s *OIDCService) issueTokens(

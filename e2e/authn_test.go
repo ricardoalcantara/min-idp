@@ -11,7 +11,7 @@ func TestAuthn_Login_Success(t *testing.T) {
 	app := setupApp(t)
 
 	w := app.request(t, http.MethodPost, "/api/auth/login", map[string]any{
-		"email":    testAdminEmail,
+		"login":    testAdminEmail,
 		"password": testAdminPass,
 	})
 
@@ -26,7 +26,7 @@ func TestAuthn_Login_WrongPassword(t *testing.T) {
 	app := setupApp(t)
 
 	w := app.request(t, http.MethodPost, "/api/auth/login", map[string]any{
-		"email":    testAdminEmail,
+		"login":    testAdminEmail,
 		"password": "wrong-password",
 	})
 

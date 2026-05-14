@@ -21,7 +21,7 @@ func NewUserDto(u *user_entities.User) UserDto {
 		Email:    u.Email,
 		Username: u.Username,
 		Name:     u.Name,
-		Status:   u.Status,
+		Status:   string(u.Status),
 		Roles:    roles,
 	}
 }

@@ -3,6 +3,7 @@ package user_entities
 import (
 	"github.com/ricardoalcantara/min-idp/internal/db"
 	rbac_entities "github.com/ricardoalcantara/min-idp/internal/rbac/entities"
+	"github.com/ricardoalcantara/min-idp/internal/types"
 )
 
 type User struct {
@@ -11,6 +12,6 @@ type User struct {
 	Username     string               `gorm:"uniqueIndex"`
 	Name         string
 	PasswordHash string               `gorm:"not null"`
-	Status       string               `gorm:"default:'active'"`
+	Status       types.UserStatus     `gorm:"default:'active'"`
 	Roles        []rbac_entities.Role `gorm:"many2many:user_roles;"`
 }

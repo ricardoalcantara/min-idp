@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{baseUrl}}/api/admin/users/{{userId}}/roles"
+  url: "{{baseUrl}}/api/admin/users/{{?userId}}/roles"
   body:
     type: json
     data: |-

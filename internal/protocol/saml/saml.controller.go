@@ -1,12 +1,17 @@
 package saml
 
 import (
+	"bytes"
+	"compress/flate"
 	"context"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	"encoding/xml"
 	"errors"
+	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -76,12 +81,42 @@ func (c *SAMLController) metadata(ctx *gin.Context) {
 }
 
 func (c *SAMLController) sso(ctx *gin.Context) {
-	idp, err := c.buildIDP(ctx.Request.Context())
+	r := ctx.Request
+	if r.Method == "POST" {
+		r = normalisePostBinding(r)
+	}
+	idp, err := c.buildIDP(r.Context())
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
 		return
 	}
-	idp.ServeSSO(ctx.Writer, ctx.Request)
+	idp.ServeSSO(ctx.Writer, r)
+}
+
+// normalisePostBinding detects a DEFLATE-compressed SAMLRequest sent via HTTP-POST
+// (non-standard but done by apps like Nextcloud's user_saml). When detected it returns
+// a synthetic GET request so crewjam processes it through the Redirect binding path.
+func normalisePostBinding(r *http.Request) *http.Request {
+	encoded := r.FormValue("SAMLRequest")
+	if encoded == "" {
+		return r
+	}
+	decoded, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		return r
+	}
+	if _, err := io.ReadAll(flate.NewReader(bytes.NewReader(decoded))); err != nil {
+		return r // not DEFLATE — standard POST binding, leave unchanged
+	}
+	q := url.Values{}
+	q.Set("SAMLRequest", encoded)
+	if rs := r.FormValue("RelayState"); rs != "" {
+		q.Set("RelayState", rs)
+	}
+	clone := r.Clone(r.Context())
+	clone.Method = "GET"
+	clone.URL.RawQuery = q.Encode()
+	return clone
 }
 
 func (c *SAMLController) slo(ctx *gin.Context) {
@@ -129,13 +164,14 @@ func (c *SAMLController) buildIDP(ctx context.Context) (*crewjam.IdentityProvide
 	sloURL, _ := url.Parse(c.cfg.ExternalURL + "/saml/slo")
 
 	return &crewjam.IdentityProvider{
-		Key:                  rsaKey,
-		Certificate:          cert,
-		MetadataURL:          *metaURL,
-		SSOURL:               *ssoURL,
-		LogoutURL:            *sloURL,
+		Key:                     rsaKey,
+		Certificate:             cert,
+		MetadataURL:             *metaURL,
+		SSOURL:                  *ssoURL,
+		LogoutURL:               *sloURL,
 		ServiceProviderProvider: c.samlSvc,
-		SessionProvider:      c.samlSvc,
+		SessionProvider:         c.samlSvc,
+		Logger:                  log.Default(),
 	}, nil
 }
 

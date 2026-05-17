@@ -86,11 +86,13 @@ func (s *SAMLService) GetSession(w http.ResponseWriter, r *http.Request, req *cr
 		roleValues[i] = crewjam.AttributeValue{Type: "xs:string", Value: r}
 	}
 
+	nameID, nameIDFormat := resolveNameID(claims, client.NameIDFormat)
+
 	return &crewjam.Session{
-		ID:             claims.SessionUUID,
-		Index:          claims.SessionUUID,
-		NameID:         claims.UserUUID,
-		NameIDFormat:   "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
+		ID:           claims.SessionUUID,
+		Index:        claims.SessionUUID,
+		NameID:       nameID,
+		NameIDFormat: nameIDFormat,
 		CustomAttributes: []crewjam.Attribute{
 			{
 				FriendlyName: "sub",
@@ -174,4 +176,15 @@ func (s *SAMLService) buildEntityDescriptor(client *sp_entities.SAMLClient) *cre
 	}
 
 	return desc
+}
+
+func resolveNameID(claims *session.SessionClaims, format string) (nameID, nameIDFormat string) {
+	switch format {
+	case "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress":
+		return claims.Email, format
+	case "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified":
+		return claims.Username, format
+	default:
+		return claims.UserUUID, "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"
+	}
 }

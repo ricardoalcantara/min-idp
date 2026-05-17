@@ -8,3 +8,4 @@ bruno/environments/*.yml
 .env
 .air.toml
 tmp/
+.vscode/

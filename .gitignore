@@ -1,4 +1,5 @@
 /min-idp
+bruno/
 docker-compose.override.yml
 bruno/environments/*.yml
 !bruno/environments/Local.yml

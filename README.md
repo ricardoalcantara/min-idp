@@ -3,6 +3,8 @@
 A minimal, self-hosted Identity Provider supporting **OIDC/OAuth 2.0** and **SAML 2.0**.
 Built with Go, [go-minstack](https://github.com/go-minstack), Gin, and GORM.
 
+→ [Roadmap](ROADMAP.md)
+
 ---
 
 ## Prerequisites

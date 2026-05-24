@@ -128,8 +128,7 @@ func (c *SAMLController) slo(ctx *gin.Context) {
 
 	spName := c.samlSvc.SPNameByEntityID(entityID)
 
-	ctx.Header("Content-Type", "text/html; charset=utf-8")
-	_ = views.LogoutTmpl.Execute(ctx.Writer, map[string]any{
+	views.LogoutTmpl.Render(ctx, map[string]any{
 		"SPName":    spName,
 		"ReturnURL": relayState,
 	})

@@ -52,17 +52,14 @@ func NewAuthnController(
 }
 
 func (c *AuthnController) landingPage(ctx *gin.Context) {
-	ctx.Header("Content-Type", "text/html; charset=utf-8")
-	_ = views.LandingTmpl.Execute(ctx.Writer, nil)
+	views.LandingTmpl.Render(ctx, nil)
 }
 
 func (c *AuthnController) loginPage(ctx *gin.Context) {
-	ctx.Header("Content-Type", "text/html; charset=utf-8")
-	_ = views.LoginTmpl.Execute(ctx.Writer, map[string]string{"Next": ctx.Query("next"), "Error": ""})
+	views.LoginTmpl.Render(ctx, map[string]string{"Next": ctx.Query("next"), "Error": ""})
 }
 
 func (c *AuthnController) infoPage(ctx *gin.Context) {
-	ctx.Header("Content-Type", "text/html; charset=utf-8")
 	cookie, err := ctx.Cookie(c.cfg.SessionCookie)
 	if err != nil {
 		ctx.Redirect(http.StatusFound, "/")
@@ -87,7 +84,7 @@ func (c *AuthnController) infoPage(ctx *gin.Context) {
 			}
 		}
 	}
-	_ = views.InfoTmpl.Execute(ctx.Writer, map[string]interface{}{
+	views.InfoTmpl.Render(ctx, map[string]interface{}{
 		"Email":    claims["email"],
 		"Name":     claims["name"],
 		"UUID":     claims["sub"],
@@ -151,8 +148,7 @@ func (c *AuthnController) loginForm(ctx *gin.Context) {
 
 	renderLoginError := func(status int, msg string) {
 		ctx.Status(status)
-		ctx.Header("Content-Type", "text/html; charset=utf-8")
-		_ = views.LoginTmpl.Execute(ctx.Writer, map[string]string{"Next": next, "Error": msg})
+		views.LoginTmpl.Render(ctx, map[string]string{"Next": next, "Error": msg})
 	}
 
 	u, err := c.service.Authenticate(login, password)
@@ -219,8 +215,7 @@ func (c *AuthnController) register(ctx *gin.Context) {
 const forgotPasswordGenericMsg = "If that email is registered, a reset link has been sent."
 
 func (c *AuthnController) forgotPasswordPage(ctx *gin.Context) {
-	ctx.Header("Content-Type", "text/html; charset=utf-8")
-	_ = views.ForgotPasswordTmpl.Execute(ctx.Writer, map[string]string{"Error": "", "Message": ""})
+	views.ForgotPasswordTmpl.Render(ctx, map[string]string{"Error": "", "Message": ""})
 }
 
 func (c *AuthnController) forgotPassword(ctx *gin.Context) {
@@ -237,8 +232,7 @@ func (c *AuthnController) forgotPassword(ctx *gin.Context) {
 	if bindErr != nil {
 		if isForm {
 			ctx.Status(http.StatusBadRequest)
-			ctx.Header("Content-Type", "text/html; charset=utf-8")
-			_ = views.ForgotPasswordTmpl.Execute(ctx.Writer, map[string]string{"Error": "Please enter a valid email.", "Message": ""})
+			views.ForgotPasswordTmpl.Render(ctx, map[string]string{"Error": "Please enter a valid email.", "Message": ""})
 			return
 		}
 		ctx.JSON(http.StatusBadRequest, web.NewErrorDto(bindErr))
@@ -251,16 +245,14 @@ func (c *AuthnController) forgotPassword(ctx *gin.Context) {
 	_ = c.service.RequestPasswordReset(ctx.Request.Context(), input.Email, input.CodeChallenge, input.CodeChallengeMethod)
 
 	if isForm {
-		ctx.Header("Content-Type", "text/html; charset=utf-8")
-		_ = views.ForgotPasswordTmpl.Execute(ctx.Writer, map[string]string{"Error": "", "Message": forgotPasswordGenericMsg})
+		views.ForgotPasswordTmpl.Render(ctx, map[string]string{"Error": "", "Message": forgotPasswordGenericMsg})
 		return
 	}
 	ctx.JSON(http.StatusOK, web.NewMessageDto(forgotPasswordGenericMsg))
 }
 
 func (c *AuthnController) resetPasswordPage(ctx *gin.Context) {
-	ctx.Header("Content-Type", "text/html; charset=utf-8")
-	_ = views.ResetPasswordTmpl.Execute(ctx.Writer, map[string]string{
+	views.ResetPasswordTmpl.Render(ctx, map[string]string{
 		"Token":   ctx.Query("token"),
 		"Error":   "",
 		"Message": "",
@@ -281,8 +273,7 @@ func (c *AuthnController) resetPassword(ctx *gin.Context) {
 	if bindErr != nil {
 		if isForm {
 			ctx.Status(http.StatusBadRequest)
-			ctx.Header("Content-Type", "text/html; charset=utf-8")
-			_ = views.ResetPasswordTmpl.Execute(ctx.Writer, map[string]string{
+			views.ResetPasswordTmpl.Render(ctx, map[string]string{
 				"Token":   input.Token,
 				"Error":   "Please enter a password of at least 8 characters.",
 				"Message": "",
@@ -297,8 +288,7 @@ func (c *AuthnController) resetPassword(ctx *gin.Context) {
 		if errors.Is(err, errInvalidResetToken) || errors.Is(err, errWeakPassword) {
 			if isForm {
 				ctx.Status(http.StatusBadRequest)
-				ctx.Header("Content-Type", "text/html; charset=utf-8")
-				_ = views.ResetPasswordTmpl.Execute(ctx.Writer, map[string]string{
+				views.ResetPasswordTmpl.Render(ctx, map[string]string{
 					"Token":   input.Token,
 					"Error":   "Reset link is invalid or has expired. Please request a new one.",
 					"Message": "",
@@ -310,8 +300,7 @@ func (c *AuthnController) resetPassword(ctx *gin.Context) {
 		}
 		if isForm {
 			ctx.Status(http.StatusInternalServerError)
-			ctx.Header("Content-Type", "text/html; charset=utf-8")
-			_ = views.ResetPasswordTmpl.Execute(ctx.Writer, map[string]string{
+			views.ResetPasswordTmpl.Render(ctx, map[string]string{
 				"Token":   input.Token,
 				"Error":   "Internal error. Please try again.",
 				"Message": "",
@@ -323,8 +312,7 @@ func (c *AuthnController) resetPassword(ctx *gin.Context) {
 	}
 
 	if isForm {
-		ctx.Header("Content-Type", "text/html; charset=utf-8")
-		_ = views.ResetPasswordTmpl.Execute(ctx.Writer, map[string]string{
+		views.ResetPasswordTmpl.Render(ctx, map[string]string{
 			"Token":   "",
 			"Error":   "",
 			"Message": "Your password has been reset. You can now sign in.",

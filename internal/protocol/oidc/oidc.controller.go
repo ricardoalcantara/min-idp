@@ -279,8 +279,7 @@ func (c *OIDCController) logout(ctx *gin.Context) {
 		}
 	}
 
-	ctx.Header("Content-Type", "text/html; charset=utf-8")
-	_ = views.LogoutTmpl.Execute(ctx.Writer, map[string]any{
+	views.LogoutTmpl.Render(ctx, map[string]any{
 		"SPName":    spName,
 		"ReturnURL": redirectURI,
 	})

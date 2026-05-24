@@ -3,7 +3,18 @@ package views
 import (
 	"embed"
 	"html/template"
+
+	"github.com/gin-gonic/gin"
 )
+
+type Template struct {
+	*template.Template
+}
+
+func (t *Template) Render(ctx *gin.Context, data any) {
+	ctx.Header("Content-Type", "text/html; charset=utf-8")
+	_ = t.Execute(ctx.Writer, data)
+}
 
 //go:embed *.html
 var files embed.FS
@@ -17,6 +28,6 @@ var (
 	ResetPasswordTmpl  = parse("reset_password.html")
 )
 
-func parse(name string) *template.Template {
-	return template.Must(template.New(name).ParseFS(files, name))
+func parse(name string) *Template {
+	return &Template{template.Must(template.New(name).ParseFS(files, name))}
 }

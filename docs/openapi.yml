@@ -40,6 +40,44 @@ components:
         access_token:
           type: string
 
+    ForgotPasswordRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+        code_challenge:
+          type: string
+          description: |
+            Optional PKCE code challenge. When provided, the matching
+            `code_verifier` will be required on the subsequent reset call.
+            The HTML reset form always sets this; JSON API callers may opt in.
+        code_challenge_method:
+          type: string
+          enum: [S256, plain]
+          description: |
+            Required when `code_challenge` is set. The HTML form uses `S256`.
+            Any other value (including an empty method with a non-empty
+            challenge) is rejected.
+
+    ResetPasswordRequest:
+      type: object
+      required: [token, password]
+      properties:
+        token:
+          type: string
+          description: Raw token received via the password reset email.
+        password:
+          type: string
+          minLength: 8
+          description: New password (minimum 8 characters).
+        code_verifier:
+          type: string
+          description: |
+            Required when the original forgot-password request set a
+            `code_challenge`. Ignored otherwise.
+
     UserDto:
       type: object
       properties:
@@ -360,6 +398,81 @@ paths:
           description: Logged out
         "303":
           description: Redirect (when ?redirect= is set)
+
+  /api/auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Request password reset
+      description: |
+        Triggers a password reset email if the address belongs to an active
+        account. To avoid account enumeration this endpoint always returns
+        200 with the same generic message regardless of whether the email
+        exists or the account is active.
+
+        Supports optional PKCE: when `code_challenge` is provided, the
+        accompanying `code_verifier` will be required on the subsequent
+        `/api/auth/reset-password` call. The browser-facing HTML form always
+        opts in to PKCE.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+      responses:
+        "200":
+          description: Generic acknowledgement (sent regardless of email existence).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageDto'
+        "400":
+          description: Malformed request body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDto'
+
+  /api/auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Reset password using a token
+      description: |
+        Consumes a single-use reset token, updates the user's password, and
+        revokes existing sessions. The token is invalidated immediately on
+        success.
+
+        If the original forgot-password request included a `code_challenge`,
+        `code_verifier` must be supplied here. All token-validation failures
+        (invalid, expired, wrong verifier) collapse to the same 400 error so
+        no information about token state is leaked.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        "200":
+          description: Password updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageDto'
+        "400":
+          description: Invalid/expired token, missing verifier, or password too short.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDto'
 
   # ── Me ───────────────────────────────────────────────────────────────────
 

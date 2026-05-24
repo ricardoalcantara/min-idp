@@ -19,6 +19,7 @@ import (
 	"github.com/ricardoalcantara/min-idp/internal/config"
 	"github.com/ricardoalcantara/min-idp/internal/keystore"
 	"github.com/ricardoalcantara/min-idp/internal/kvstore"
+	"github.com/ricardoalcantara/min-idp/internal/notification"
 	"github.com/ricardoalcantara/min-idp/internal/protocol/oidc"
 	"github.com/ricardoalcantara/min-idp/internal/protocol/saml"
 	"github.com/ricardoalcantara/min-idp/internal/rbac"
@@ -69,6 +70,7 @@ func setupApp(t *testing.T) *testApp {
 	sp.Register(app)
 	keystore.Register(app)
 	audit.Register(app)
+	notification.Register(app)
 	authn.Register(app)
 	bootstrap.Register(app)
 	oidc.Register(app)

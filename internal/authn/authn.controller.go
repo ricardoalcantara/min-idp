@@ -216,6 +216,124 @@ func (c *AuthnController) register(ctx *gin.Context) {
 	ctx.JSON(http.StatusNotImplemented, web.NewMessageDto("not implemented"))
 }
 
+const forgotPasswordGenericMsg = "If that email is registered, a reset link has been sent."
+
+func (c *AuthnController) forgotPasswordPage(ctx *gin.Context) {
+	ctx.Header("Content-Type", "text/html; charset=utf-8")
+	_ = views.ForgotPasswordTmpl.Execute(ctx.Writer, map[string]string{"Error": "", "Message": ""})
+}
+
+func (c *AuthnController) forgotPassword(ctx *gin.Context) {
+	ct := ctx.GetHeader("Content-Type")
+	isForm := strings.HasPrefix(ct, "application/x-www-form-urlencoded")
+
+	var input authn_dto.ForgotPasswordDto
+	var bindErr error
+	if isForm {
+		bindErr = ctx.ShouldBind(&input)
+	} else {
+		bindErr = ctx.ShouldBindJSON(&input)
+	}
+	if bindErr != nil {
+		if isForm {
+			ctx.Status(http.StatusBadRequest)
+			ctx.Header("Content-Type", "text/html; charset=utf-8")
+			_ = views.ForgotPasswordTmpl.Execute(ctx.Writer, map[string]string{"Error": "Please enter a valid email.", "Message": ""})
+			return
+		}
+		ctx.JSON(http.StatusBadRequest, web.NewErrorDto(bindErr))
+		return
+	}
+
+	// Errors here (rejected method, infra failures) are not surfaced to the
+	// caller — the response is the same generic 200 either way. The service
+	// logs/propagates as needed.
+	_ = c.service.RequestPasswordReset(ctx.Request.Context(), input.Email, input.CodeChallenge, input.CodeChallengeMethod)
+
+	if isForm {
+		ctx.Header("Content-Type", "text/html; charset=utf-8")
+		_ = views.ForgotPasswordTmpl.Execute(ctx.Writer, map[string]string{"Error": "", "Message": forgotPasswordGenericMsg})
+		return
+	}
+	ctx.JSON(http.StatusOK, web.NewMessageDto(forgotPasswordGenericMsg))
+}
+
+func (c *AuthnController) resetPasswordPage(ctx *gin.Context) {
+	ctx.Header("Content-Type", "text/html; charset=utf-8")
+	_ = views.ResetPasswordTmpl.Execute(ctx.Writer, map[string]string{
+		"Token":   ctx.Query("token"),
+		"Error":   "",
+		"Message": "",
+	})
+}
+
+func (c *AuthnController) resetPassword(ctx *gin.Context) {
+	ct := ctx.GetHeader("Content-Type")
+	isForm := strings.HasPrefix(ct, "application/x-www-form-urlencoded")
+
+	var input authn_dto.ResetPasswordDto
+	var bindErr error
+	if isForm {
+		bindErr = ctx.ShouldBind(&input)
+	} else {
+		bindErr = ctx.ShouldBindJSON(&input)
+	}
+	if bindErr != nil {
+		if isForm {
+			ctx.Status(http.StatusBadRequest)
+			ctx.Header("Content-Type", "text/html; charset=utf-8")
+			_ = views.ResetPasswordTmpl.Execute(ctx.Writer, map[string]string{
+				"Token":   input.Token,
+				"Error":   "Please enter a password of at least 8 characters.",
+				"Message": "",
+			})
+			return
+		}
+		ctx.JSON(http.StatusBadRequest, web.NewErrorDto(bindErr))
+		return
+	}
+
+	if err := c.service.ResetPassword(ctx.Request.Context(), input.Token, input.Password, input.CodeVerifier); err != nil {
+		if errors.Is(err, errInvalidResetToken) || errors.Is(err, errWeakPassword) {
+			if isForm {
+				ctx.Status(http.StatusBadRequest)
+				ctx.Header("Content-Type", "text/html; charset=utf-8")
+				_ = views.ResetPasswordTmpl.Execute(ctx.Writer, map[string]string{
+					"Token":   input.Token,
+					"Error":   "Reset link is invalid or has expired. Please request a new one.",
+					"Message": "",
+				})
+				return
+			}
+			ctx.JSON(http.StatusBadRequest, web.NewErrorDto(err))
+			return
+		}
+		if isForm {
+			ctx.Status(http.StatusInternalServerError)
+			ctx.Header("Content-Type", "text/html; charset=utf-8")
+			_ = views.ResetPasswordTmpl.Execute(ctx.Writer, map[string]string{
+				"Token":   input.Token,
+				"Error":   "Internal error. Please try again.",
+				"Message": "",
+			})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, web.NewErrorDto(err))
+		return
+	}
+
+	if isForm {
+		ctx.Header("Content-Type", "text/html; charset=utf-8")
+		_ = views.ResetPasswordTmpl.Execute(ctx.Writer, map[string]string{
+			"Token":   "",
+			"Error":   "",
+			"Message": "Your password has been reset. You can now sign in.",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, web.NewMessageDto("password updated"))
+}
+
 func (c *AuthnController) mintToken(ctx *gin.Context, userID uint, userUUID, sessionUUID, email, username, name string, expiresAt time.Time) (string, error) {
 	roles, _ := c.rbacSvc.GetUserRoleNames(userID)
 

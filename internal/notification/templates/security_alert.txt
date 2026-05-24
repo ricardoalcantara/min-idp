@@ -1,0 +1,7 @@
+A new sign-in to your account was detected.
+
+Time: {{.Time}}
+IP address: {{.IP}}
+User agent: {{.UserAgent}}
+
+If this was not you, revoke your sessions: {{.RevokeSessionsURL}}

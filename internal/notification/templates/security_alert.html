@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>New sign-in</title></head>
+<body>
+<p>A new sign-in to your account was detected.</p>
+<ul>
+<li>Time: {{.Time}}</li>
+<li>IP address: {{.IP}}</li>
+<li>User agent: {{.UserAgent}}</li>
+</ul>
+<p>If this was not you, <a href="{{.RevokeSessionsURL}}">revoke your sessions</a>.</p>
+</body>
+</html>

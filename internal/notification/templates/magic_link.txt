@@ -1,0 +1,7 @@
+Use the link below to sign in.
+
+Sign in: {{.LoginURL}}
+
+This link expires in {{.ExpiresIn}}.
+
+If you did not request this, you can ignore this email.

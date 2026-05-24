@@ -1,0 +1,5 @@
+This is a test email from {{.AppName}}.
+
+External URL: {{.ExternalURL}}
+
+If you received this message, SMTP is configured correctly.

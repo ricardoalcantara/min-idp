@@ -7,11 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type Template struct {
+type Template[T any] struct {
 	*template.Template
 }
 
-func (t *Template) Render(ctx *gin.Context, data any) {
+func (t *Template[T]) Render(ctx *gin.Context, data T) {
 	ctx.Header("Content-Type", "text/html; charset=utf-8")
 	_ = t.Execute(ctx.Writer, data)
 }
@@ -20,14 +20,14 @@ func (t *Template) Render(ctx *gin.Context, data any) {
 var files embed.FS
 
 var (
-	LandingTmpl        = parse("landing.html")
-	LoginTmpl          = parse("login.html")
-	InfoTmpl           = parse("info.html")
-	LogoutTmpl         = parse("logout.html")
-	ForgotPasswordTmpl = parse("forgot_password.html")
-	ResetPasswordTmpl  = parse("reset_password.html")
+	LandingTmpl        = parse[struct{}]("landing.html")
+	LoginTmpl          = parse[LoginViewModel]("login.html")
+	InfoTmpl           = parse[InfoViewModel]("info.html")
+	LogoutTmpl         = parse[LogoutViewModel]("logout.html")
+	ForgotPasswordTmpl = parse[ForgotPasswordViewModel]("forgot_password.html")
+	ResetPasswordTmpl  = parse[ResetPasswordViewModel]("reset_password.html")
 )
 
-func parse(name string) *Template {
-	return &Template{template.Must(template.New(name).ParseFS(files, name))}
+func parse[T any](name string) *Template[T] {
+	return &Template[T]{template.Must(template.New(name).ParseFS(files, name))}
 }

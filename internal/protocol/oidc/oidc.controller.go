@@ -12,7 +12,7 @@ import (
 	"github.com/ricardoalcantara/min-idp/internal/jwtutil"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-minstack/web"
+	"github.com/go-minstack/go-minstack/web"
 	"github.com/ricardoalcantara/min-idp/internal/config"
 	localcrypto "github.com/ricardoalcantara/min-idp/internal/crypto"
 	"github.com/ricardoalcantara/min-idp/internal/keystore"
@@ -279,10 +279,7 @@ func (c *OIDCController) logout(ctx *gin.Context) {
 		}
 	}
 
-	views.LogoutTmpl.Render(ctx, map[string]any{
-		"SPName":    spName,
-		"ReturnURL": redirectURI,
-	})
+	views.LogoutTmpl.Render(ctx, views.LogoutViewModel{SPName: spName, ReturnURL: redirectURI})
 }
 
 func (c *OIDCController) extractSessionUUIDFromToken(tokenStr string) string {
@@ -296,4 +293,3 @@ func (c *OIDCController) extractSessionUUIDFromToken(tokenStr string) string {
 	sid, _ := claims["sid"].(string)
 	return sid
 }
-

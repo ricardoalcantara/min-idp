@@ -3,7 +3,7 @@ package notification
 import (
 	"log/slog"
 
-	"github.com/go-minstack/core"
+	"github.com/go-minstack/go-minstack/core"
 	"github.com/ricardoalcantara/min-idp/internal/config"
 )
 

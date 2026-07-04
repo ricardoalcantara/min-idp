@@ -1,7 +1,7 @@
 package session
 
 import (
-	"github.com/go-minstack/core"
+	"github.com/go-minstack/go-minstack/core"
 	session_repositories "github.com/ricardoalcantara/min-idp/internal/session/repositories"
 )
 

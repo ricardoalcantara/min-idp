@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-minstack/go-minstack/web"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/go-minstack/web"
+	localcrypto "github.com/ricardoalcantara/min-idp/internal/crypto"
 	"github.com/ricardoalcantara/min-idp/internal/keystore"
 	keystore_entities "github.com/ricardoalcantara/min-idp/internal/keystore/entities"
-	localcrypto "github.com/ricardoalcantara/min-idp/internal/crypto"
 	"github.com/ricardoalcantara/min-idp/internal/kvstore"
 )
 
@@ -160,9 +160,9 @@ func validateJWT(ctx context.Context, tokenStr string, ks keystore.KeyStore, kv 
 	}
 
 	userUUID, _ := mapClaims["sub"].(string)
-	email, _    := mapClaims["email"].(string)
+	email, _ := mapClaims["email"].(string)
 	username, _ := mapClaims["username"].(string)
-	name, _     := mapClaims["name"].(string)
+	name, _ := mapClaims["name"].(string)
 
 	var userID uint
 	if uid, ok := mapClaims["uid"].(float64); ok {

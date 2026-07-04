@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-minstack/web"
+	"github.com/go-minstack/go-minstack/web"
 	notification_dto "github.com/ricardoalcantara/min-idp/internal/notification/dto"
 )
 

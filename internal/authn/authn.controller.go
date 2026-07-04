@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-minstack/web"
+	"github.com/go-minstack/go-minstack/web"
 	authn_dto "github.com/ricardoalcantara/min-idp/internal/authn/dto"
 	"github.com/ricardoalcantara/min-idp/internal/config"
 	"github.com/ricardoalcantara/min-idp/internal/jwtutil"
@@ -52,11 +52,11 @@ func NewAuthnController(
 }
 
 func (c *AuthnController) landingPage(ctx *gin.Context) {
-	views.LandingTmpl.Render(ctx, nil)
+	views.LandingTmpl.Render(ctx, struct{}{})
 }
 
 func (c *AuthnController) loginPage(ctx *gin.Context) {
-	views.LoginTmpl.Render(ctx, map[string]string{"Next": ctx.Query("next"), "Error": ""})
+	views.LoginTmpl.Render(ctx, views.LoginViewModel{Next: ctx.Query("next")})
 }
 
 func (c *AuthnController) infoPage(ctx *gin.Context) {
@@ -84,11 +84,14 @@ func (c *AuthnController) infoPage(ctx *gin.Context) {
 			}
 		}
 	}
-	views.InfoTmpl.Render(ctx, map[string]interface{}{
-		"Email":    claims["email"],
-		"Name":     claims["name"],
-		"UUID":     claims["sub"],
-		"RoleList": roleList,
+	email, _ := claims["email"].(string)
+	name, _ := claims["name"].(string)
+	uuid, _ := claims["sub"].(string)
+	views.InfoTmpl.Render(ctx, views.InfoViewModel{
+		Email:    email,
+		Name:     name,
+		UUID:     uuid,
+		RoleList: roleList,
 	})
 }
 
@@ -148,7 +151,7 @@ func (c *AuthnController) loginForm(ctx *gin.Context) {
 
 	renderLoginError := func(status int, msg string) {
 		ctx.Status(status)
-		views.LoginTmpl.Render(ctx, map[string]string{"Next": next, "Error": msg})
+		views.LoginTmpl.Render(ctx, views.LoginViewModel{Next: next, Error: msg})
 	}
 
 	u, err := c.service.Authenticate(login, password)
@@ -215,7 +218,7 @@ func (c *AuthnController) register(ctx *gin.Context) {
 const forgotPasswordGenericMsg = "If that email is registered, a reset link has been sent."
 
 func (c *AuthnController) forgotPasswordPage(ctx *gin.Context) {
-	views.ForgotPasswordTmpl.Render(ctx, map[string]string{"Error": "", "Message": ""})
+	views.ForgotPasswordTmpl.Render(ctx, views.ForgotPasswordViewModel{})
 }
 
 func (c *AuthnController) forgotPassword(ctx *gin.Context) {
@@ -232,7 +235,7 @@ func (c *AuthnController) forgotPassword(ctx *gin.Context) {
 	if bindErr != nil {
 		if isForm {
 			ctx.Status(http.StatusBadRequest)
-			views.ForgotPasswordTmpl.Render(ctx, map[string]string{"Error": "Please enter a valid email.", "Message": ""})
+			views.ForgotPasswordTmpl.Render(ctx, views.ForgotPasswordViewModel{Error: "Please enter a valid email."})
 			return
 		}
 		ctx.JSON(http.StatusBadRequest, web.NewErrorDto(bindErr))
@@ -245,18 +248,14 @@ func (c *AuthnController) forgotPassword(ctx *gin.Context) {
 	_ = c.service.RequestPasswordReset(ctx.Request.Context(), input.Email, input.CodeChallenge, input.CodeChallengeMethod)
 
 	if isForm {
-		views.ForgotPasswordTmpl.Render(ctx, map[string]string{"Error": "", "Message": forgotPasswordGenericMsg})
+		views.ForgotPasswordTmpl.Render(ctx, views.ForgotPasswordViewModel{Message: forgotPasswordGenericMsg})
 		return
 	}
 	ctx.JSON(http.StatusOK, web.NewMessageDto(forgotPasswordGenericMsg))
 }
 
 func (c *AuthnController) resetPasswordPage(ctx *gin.Context) {
-	views.ResetPasswordTmpl.Render(ctx, map[string]string{
-		"Token":   ctx.Query("token"),
-		"Error":   "",
-		"Message": "",
-	})
+	views.ResetPasswordTmpl.Render(ctx, views.ResetPasswordViewModel{Token: ctx.Query("token")})
 }
 
 func (c *AuthnController) resetPassword(ctx *gin.Context) {
@@ -273,10 +272,9 @@ func (c *AuthnController) resetPassword(ctx *gin.Context) {
 	if bindErr != nil {
 		if isForm {
 			ctx.Status(http.StatusBadRequest)
-			views.ResetPasswordTmpl.Render(ctx, map[string]string{
-				"Token":   input.Token,
-				"Error":   "Please enter a password of at least 8 characters.",
-				"Message": "",
+			views.ResetPasswordTmpl.Render(ctx, views.ResetPasswordViewModel{
+				Token: input.Token,
+				Error: "Please enter a password of at least 8 characters.",
 			})
 			return
 		}
@@ -288,10 +286,9 @@ func (c *AuthnController) resetPassword(ctx *gin.Context) {
 		if errors.Is(err, errInvalidResetToken) || errors.Is(err, errWeakPassword) {
 			if isForm {
 				ctx.Status(http.StatusBadRequest)
-				views.ResetPasswordTmpl.Render(ctx, map[string]string{
-					"Token":   input.Token,
-					"Error":   "Reset link is invalid or has expired. Please request a new one.",
-					"Message": "",
+				views.ResetPasswordTmpl.Render(ctx, views.ResetPasswordViewModel{
+					Token: input.Token,
+					Error: "Reset link is invalid or has expired. Please request a new one.",
 				})
 				return
 			}
@@ -300,10 +297,9 @@ func (c *AuthnController) resetPassword(ctx *gin.Context) {
 		}
 		if isForm {
 			ctx.Status(http.StatusInternalServerError)
-			views.ResetPasswordTmpl.Render(ctx, map[string]string{
-				"Token":   input.Token,
-				"Error":   "Internal error. Please try again.",
-				"Message": "",
+			views.ResetPasswordTmpl.Render(ctx, views.ResetPasswordViewModel{
+				Token: input.Token,
+				Error: "Internal error. Please try again.",
 			})
 			return
 		}
@@ -312,10 +308,8 @@ func (c *AuthnController) resetPassword(ctx *gin.Context) {
 	}
 
 	if isForm {
-		views.ResetPasswordTmpl.Render(ctx, map[string]string{
-			"Token":   "",
-			"Error":   "",
-			"Message": "Your password has been reset. You can now sign in.",
+		views.ResetPasswordTmpl.Render(ctx, views.ResetPasswordViewModel{
+			Message: "Your password has been reset. You can now sign in.",
 		})
 		return
 	}
@@ -354,4 +348,3 @@ func (c *AuthnController) extractSessionUUID(ctx *gin.Context) string {
 	}
 	return ""
 }
-

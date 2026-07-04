@@ -1,7 +1,7 @@
 package rbac
 
 import (
-	"github.com/go-minstack/core"
+	"github.com/go-minstack/go-minstack/core"
 	rbac_repositories "github.com/ricardoalcantara/min-idp/internal/rbac/repositories"
 )
 

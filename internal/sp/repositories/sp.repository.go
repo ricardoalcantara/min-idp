@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/go-minstack/repository"
+	"github.com/go-minstack/go-minstack/repository"
 	dbpkg "github.com/ricardoalcantara/min-idp/internal/db"
 	sp_entities "github.com/ricardoalcantara/min-idp/internal/sp/entities"
 	gormdb "gorm.io/gorm"

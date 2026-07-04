@@ -1,6 +1,6 @@
 package saml
 
-import "github.com/go-minstack/core"
+import "github.com/go-minstack/go-minstack/core"
 
 func Register(app *core.App) {
 	app.Provide(NewSAMLService)

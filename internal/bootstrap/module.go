@@ -3,8 +3,8 @@ package bootstrap
 import (
 	"context"
 
+	"github.com/go-minstack/go-minstack/core"
 	bootstrap_repositories "github.com/ricardoalcantara/min-idp/internal/bootstrap/repositories"
-	"github.com/go-minstack/core"
 	"go.uber.org/fx"
 )
 

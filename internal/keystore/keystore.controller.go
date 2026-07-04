@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-minstack/web"
+	"github.com/go-minstack/go-minstack/web"
 	keystore_dto "github.com/ricardoalcantara/min-idp/internal/keystore/dto"
 	keystore_entities "github.com/ricardoalcantara/min-idp/internal/keystore/entities"
 )

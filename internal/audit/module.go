@@ -1,7 +1,7 @@
 package audit
 
 import (
-	"github.com/go-minstack/core"
+	"github.com/go-minstack/go-minstack/core"
 	audit_repositories "github.com/ricardoalcantara/min-idp/internal/audit/repositories"
 )
 

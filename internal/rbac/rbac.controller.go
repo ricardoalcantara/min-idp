@@ -5,11 +5,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-minstack/web"
+	"github.com/go-minstack/go-minstack/web"
 	"github.com/ricardoalcantara/min-idp/internal/db"
 	rbac_dto "github.com/ricardoalcantara/min-idp/internal/rbac/dto"
 )
-
 
 type RBACController struct {
 	service *RBACService
@@ -102,4 +101,3 @@ func (c *RBACController) delete(ctx *gin.Context) {
 	}
 	ctx.Status(http.StatusNoContent)
 }
-

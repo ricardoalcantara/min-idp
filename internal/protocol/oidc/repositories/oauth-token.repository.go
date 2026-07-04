@@ -3,7 +3,7 @@ package oidc_repositories
 import (
 	"errors"
 
-	"github.com/go-minstack/repository"
+	"github.com/go-minstack/go-minstack/repository"
 	dbpkg "github.com/ricardoalcantara/min-idp/internal/db"
 	oidc_entities "github.com/ricardoalcantara/min-idp/internal/protocol/oidc/entities"
 	gormdb "gorm.io/gorm"

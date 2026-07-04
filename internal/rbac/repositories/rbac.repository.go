@@ -3,7 +3,7 @@ package rbac_repositories
 import (
 	"errors"
 
-	"github.com/go-minstack/repository"
+	"github.com/go-minstack/go-minstack/repository"
 	"github.com/ricardoalcantara/min-idp/internal/db"
 	rbac_entities "github.com/ricardoalcantara/min-idp/internal/rbac/entities"
 	"gorm.io/gorm"

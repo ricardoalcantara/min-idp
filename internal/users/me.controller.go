@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-minstack/web"
+	"github.com/go-minstack/go-minstack/web"
 	"github.com/ricardoalcantara/min-idp/internal/db"
-	session_dto "github.com/ricardoalcantara/min-idp/internal/session/dto"
 	"github.com/ricardoalcantara/min-idp/internal/session"
+	session_dto "github.com/ricardoalcantara/min-idp/internal/session/dto"
 	user_dto "github.com/ricardoalcantara/min-idp/internal/users/dto"
 )
 

@@ -10,9 +10,9 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-minstack/core"
-	mgin "github.com/go-minstack/gin"
-	"github.com/go-minstack/migration"
+	"github.com/go-minstack/go-minstack/core"
+	mgin "github.com/go-minstack/go-minstack/gin"
+	"github.com/go-minstack/go-minstack/migration"
 	"github.com/ricardoalcantara/min-idp/internal/audit"
 	"github.com/ricardoalcantara/min-idp/internal/authn"
 	"github.com/ricardoalcantara/min-idp/internal/bootstrap"

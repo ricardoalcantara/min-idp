@@ -1,7 +1,7 @@
 package users
 
 import (
-	"github.com/go-minstack/core"
+	"github.com/go-minstack/go-minstack/core"
 	user_repositories "github.com/ricardoalcantara/min-idp/internal/users/repositories"
 )
 

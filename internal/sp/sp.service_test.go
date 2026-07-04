@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/go-minstack/repository"
+	"github.com/go-minstack/go-minstack/repository"
 	"github.com/ricardoalcantara/min-idp/internal/db"
 	sp_entities "github.com/ricardoalcantara/min-idp/internal/sp/entities"
 	sp_repositories "github.com/ricardoalcantara/min-idp/internal/sp/repositories"
@@ -20,27 +20,35 @@ type mockSPRepo struct {
 	err error
 }
 
-func (m *mockSPRepo) Create(_ *sp_entities.ServiceProvider) error                { return m.err }
-func (m *mockSPRepo) Update(_ *sp_entities.ServiceProvider) error                { return m.err }
-func (m *mockSPRepo) Delete(_ uint) error                                        { return m.err }
-func (m *mockSPRepo) FindByUUID(_ string) (*sp_entities.ServiceProvider, error)  { return m.sp, m.err }
-func (m *mockSPRepo) FindBySlug(_ string) (*sp_entities.ServiceProvider, error)  { return m.sp, m.err }
-func (m *mockSPRepo) FindByID(_ uint) (*sp_entities.ServiceProvider, error)  { return m.sp, m.err }
+func (m *mockSPRepo) Create(_ *sp_entities.ServiceProvider) error               { return m.err }
+func (m *mockSPRepo) Update(_ *sp_entities.ServiceProvider) error               { return m.err }
+func (m *mockSPRepo) Delete(_ uint) error                                       { return m.err }
+func (m *mockSPRepo) FindByUUID(_ string) (*sp_entities.ServiceProvider, error) { return m.sp, m.err }
+func (m *mockSPRepo) FindBySlug(_ string) (*sp_entities.ServiceProvider, error) { return m.sp, m.err }
+func (m *mockSPRepo) FindByID(_ uint) (*sp_entities.ServiceProvider, error)     { return m.sp, m.err }
 func (m *mockSPRepo) FindAll(_ ...repository.QueryOption) ([]sp_entities.ServiceProvider, error) {
 	return m.sps, m.err
 }
 
-func (m *mockSPRepo) GetOIDCClient(_ uint) (*sp_entities.OIDCClient, error)               { return nil, m.err }
-func (m *mockSPRepo) FindOIDCClientByClientID(_ string) (*sp_entities.OIDCClient, error)               { return nil, m.err }
-func (m *mockSPRepo) UpsertOIDCClient(_ *sp_entities.OIDCClient) error                     { return m.err }
-func (m *mockSPRepo) FindSAMLClientByEntityID(_ string) (*sp_entities.SAMLClient, error) { return nil, m.err }
-func (m *mockSPRepo) GetSAMLClient(_ uint) (*sp_entities.SAMLClient, error)               { return nil, m.err }
-func (m *mockSPRepo) UpsertSAMLClient(_ *sp_entities.SAMLClient) error                     { return m.err }
-func (m *mockSPRepo) ListAccessRules(_ uint) ([]sp_repositories.AccessRuleRow, error)      { return nil, m.err }
-func (m *mockSPRepo) FindSubjectID(_ string, _ uint) (uint, error)                         { return 0, m.err }
-func (m *mockSPRepo) CreateAccessRule(_ *sp_entities.AccessRule) error                     { return m.err }
-func (m *mockSPRepo) FindAccessRuleByUUID(_ string) (*sp_entities.AccessRule, error)       { return nil, m.err }
-func (m *mockSPRepo) DeleteAccessRule(_ uint) error                                        { return m.err }
+func (m *mockSPRepo) GetOIDCClient(_ uint) (*sp_entities.OIDCClient, error) { return nil, m.err }
+func (m *mockSPRepo) FindOIDCClientByClientID(_ string) (*sp_entities.OIDCClient, error) {
+	return nil, m.err
+}
+func (m *mockSPRepo) UpsertOIDCClient(_ *sp_entities.OIDCClient) error { return m.err }
+func (m *mockSPRepo) FindSAMLClientByEntityID(_ string) (*sp_entities.SAMLClient, error) {
+	return nil, m.err
+}
+func (m *mockSPRepo) GetSAMLClient(_ uint) (*sp_entities.SAMLClient, error) { return nil, m.err }
+func (m *mockSPRepo) UpsertSAMLClient(_ *sp_entities.SAMLClient) error      { return m.err }
+func (m *mockSPRepo) ListAccessRules(_ uint) ([]sp_repositories.AccessRuleRow, error) {
+	return nil, m.err
+}
+func (m *mockSPRepo) FindSubjectID(_ string, _ uint) (uint, error)     { return 0, m.err }
+func (m *mockSPRepo) CreateAccessRule(_ *sp_entities.AccessRule) error { return m.err }
+func (m *mockSPRepo) FindAccessRuleByUUID(_ string) (*sp_entities.AccessRule, error) {
+	return nil, m.err
+}
+func (m *mockSPRepo) DeleteAccessRule(_ uint) error { return m.err }
 
 func newTestSPSvc(repo SPRepository) *SPService {
 	return NewSPService(repo)

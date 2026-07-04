@@ -3,7 +3,7 @@ package audit_repositories
 import (
 	"time"
 
-	"github.com/go-minstack/repository"
+	"github.com/go-minstack/go-minstack/repository"
 	audit_entities "github.com/ricardoalcantara/min-idp/internal/audit/entities"
 	"gorm.io/gorm"
 )

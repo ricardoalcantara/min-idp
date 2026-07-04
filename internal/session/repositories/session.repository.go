@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/go-minstack/repository"
+	"github.com/go-minstack/go-minstack/repository"
 	"github.com/ricardoalcantara/min-idp/internal/db"
 	session_entities "github.com/ricardoalcantara/min-idp/internal/session/entities"
 	gormdb "gorm.io/gorm"

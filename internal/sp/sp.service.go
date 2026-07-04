@@ -3,13 +3,13 @@ package sp
 import (
 	"errors"
 
-	"github.com/go-minstack/repository"
-	"github.com/ricardoalcantara/min-idp/internal/types"
-	dbpkg "github.com/ricardoalcantara/min-idp/internal/db"
+	"github.com/go-minstack/go-minstack/repository"
 	"github.com/ricardoalcantara/min-idp/internal/crypto"
+	dbpkg "github.com/ricardoalcantara/min-idp/internal/db"
 	sp_dto "github.com/ricardoalcantara/min-idp/internal/sp/dto"
 	sp_entities "github.com/ricardoalcantara/min-idp/internal/sp/entities"
 	sp_repositories "github.com/ricardoalcantara/min-idp/internal/sp/repositories"
+	"github.com/ricardoalcantara/min-idp/internal/types"
 )
 
 var errProtocolMismatch = errors.New("operation not allowed for this SP protocol")

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-minstack/web"
+	"github.com/go-minstack/go-minstack/web"
 	audit_dto "github.com/ricardoalcantara/min-idp/internal/audit/dto"
 	audit_repositories "github.com/ricardoalcantara/min-idp/internal/audit/repositories"
 )

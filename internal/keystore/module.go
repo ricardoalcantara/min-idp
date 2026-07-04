@@ -1,7 +1,7 @@
 package keystore
 
 import (
-	"github.com/go-minstack/core"
+	"github.com/go-minstack/go-minstack/core"
 	keystore_repositories "github.com/ricardoalcantara/min-idp/internal/keystore/repositories"
 )
 

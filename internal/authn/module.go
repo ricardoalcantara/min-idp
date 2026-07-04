@@ -1,7 +1,7 @@
 package authn
 
 import (
-	"github.com/go-minstack/core"
+	"github.com/go-minstack/go-minstack/core"
 	"github.com/ricardoalcantara/min-idp/internal/users"
 )
 

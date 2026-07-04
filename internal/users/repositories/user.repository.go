@@ -3,7 +3,7 @@ package user_repositories
 import (
 	"errors"
 
-	"github.com/go-minstack/repository"
+	"github.com/go-minstack/go-minstack/repository"
 	"github.com/ricardoalcantara/min-idp/internal/db"
 	user_entities "github.com/ricardoalcantara/min-idp/internal/users/entities"
 	gormdb "gorm.io/gorm"

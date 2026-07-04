@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-minstack/web"
+	"github.com/go-minstack/go-minstack/web"
 	dbpkg "github.com/ricardoalcantara/min-idp/internal/db"
 	"github.com/ricardoalcantara/min-idp/internal/rbac"
 	sp_dto "github.com/ricardoalcantara/min-idp/internal/sp/dto"

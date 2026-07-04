@@ -1,7 +1,7 @@
 package kvstore
 
 import (
-	"github.com/go-minstack/core"
+	"github.com/go-minstack/go-minstack/core"
 	"go.uber.org/fx"
 )
 

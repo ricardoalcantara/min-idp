@@ -16,9 +16,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/gin-gonic/gin"
-	"github.com/go-minstack/web"
 	crewjam "github.com/crewjam/saml"
+	"github.com/gin-gonic/gin"
+	"github.com/go-minstack/go-minstack/web"
 	"github.com/ricardoalcantara/min-idp/internal/config"
 	"github.com/ricardoalcantara/min-idp/internal/keystore"
 	keystore_entities "github.com/ricardoalcantara/min-idp/internal/keystore/entities"
@@ -128,10 +128,7 @@ func (c *SAMLController) slo(ctx *gin.Context) {
 
 	spName := c.samlSvc.SPNameByEntityID(entityID)
 
-	views.LogoutTmpl.Render(ctx, map[string]any{
-		"SPName":    spName,
-		"ReturnURL": relayState,
-	})
+	views.LogoutTmpl.Render(ctx, views.LogoutViewModel{SPName: spName, ReturnURL: relayState})
 }
 
 func (c *SAMLController) buildIDP(ctx context.Context) (*crewjam.IdentityProvider, error) {
@@ -177,14 +174,14 @@ func (c *SAMLController) buildIDP(ctx context.Context) (*crewjam.IdentityProvide
 // XML types for metadata endpoint
 
 type entityDescriptor struct {
-	XMLName          xml.Name         `xml:"urn:oasis:names:tc:SAML:2.0:metadata EntityDescriptor"`
-	EntityID         string           `xml:"entityID,attr"`
+	XMLName          xml.Name `xml:"urn:oasis:names:tc:SAML:2.0:metadata EntityDescriptor"`
+	EntityID         string   `xml:"entityID,attr"`
 	IDPSSODescriptor idpSSODescriptor
 }
 type idpSSODescriptor struct {
-	XMLName                    xml.Name             `xml:"urn:oasis:names:tc:SAML:2.0:metadata IDPSSODescriptor"`
-	WantAuthnRequestsSigned    bool                 `xml:"WantAuthnRequestsSigned,attr"`
-	ProtocolSupportEnumeration string               `xml:"protocolSupportEnumeration,attr"`
+	XMLName                    xml.Name `xml:"urn:oasis:names:tc:SAML:2.0:metadata IDPSSODescriptor"`
+	WantAuthnRequestsSigned    bool     `xml:"WantAuthnRequestsSigned,attr"`
+	ProtocolSupportEnumeration string   `xml:"protocolSupportEnumeration,attr"`
 	KeyDescriptors             []keyDescriptor
 	SingleSignOnServices       []singleSignOnService
 	SingleLogoutServices       []singleLogoutService

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/go-minstack/repository"
+	"github.com/go-minstack/go-minstack/repository"
 	sp_entities "github.com/ricardoalcantara/min-idp/internal/sp/entities"
 	sp_repositories "github.com/ricardoalcantara/min-idp/internal/sp/repositories"
 	"github.com/ricardoalcantara/min-idp/internal/types"
@@ -26,18 +26,22 @@ func (m *mockGateSPRepo) Update(_ *sp_entities.ServiceProvider) error           
 func (m *mockGateSPRepo) Delete(_ uint) error                                       { return nil }
 func (m *mockGateSPRepo) FindByUUID(_ string) (*sp_entities.ServiceProvider, error) { return nil, nil }
 func (m *mockGateSPRepo) FindBySlug(_ string) (*sp_entities.ServiceProvider, error) { return nil, nil }
-func (m *mockGateSPRepo) FindByID(_ uint) (*sp_entities.ServiceProvider, error) { return nil, nil }
+func (m *mockGateSPRepo) FindByID(_ uint) (*sp_entities.ServiceProvider, error)     { return nil, nil }
 func (m *mockGateSPRepo) FindAll(_ ...repository.QueryOption) ([]sp_entities.ServiceProvider, error) {
 	return nil, nil
 }
-func (m *mockGateSPRepo) GetOIDCClient(_ uint) (*sp_entities.OIDCClient, error)     { return nil, nil }
-func (m *mockGateSPRepo) FindOIDCClientByClientID(_ string) (*sp_entities.OIDCClient, error) { return nil, nil }
-func (m *mockGateSPRepo) UpsertOIDCClient(_ *sp_entities.OIDCClient) error          { return nil }
-func (m *mockGateSPRepo) FindSAMLClientByEntityID(_ string) (*sp_entities.SAMLClient, error) { return nil, nil }
-func (m *mockGateSPRepo) GetSAMLClient(_ uint) (*sp_entities.SAMLClient, error)     { return nil, nil }
-func (m *mockGateSPRepo) UpsertSAMLClient(_ *sp_entities.SAMLClient) error          { return nil }
-func (m *mockGateSPRepo) FindSubjectID(_ string, _ uint) (uint, error)              { return 0, nil }
-func (m *mockGateSPRepo) CreateAccessRule(_ *sp_entities.AccessRule) error          { return nil }
+func (m *mockGateSPRepo) GetOIDCClient(_ uint) (*sp_entities.OIDCClient, error) { return nil, nil }
+func (m *mockGateSPRepo) FindOIDCClientByClientID(_ string) (*sp_entities.OIDCClient, error) {
+	return nil, nil
+}
+func (m *mockGateSPRepo) UpsertOIDCClient(_ *sp_entities.OIDCClient) error { return nil }
+func (m *mockGateSPRepo) FindSAMLClientByEntityID(_ string) (*sp_entities.SAMLClient, error) {
+	return nil, nil
+}
+func (m *mockGateSPRepo) GetSAMLClient(_ uint) (*sp_entities.SAMLClient, error) { return nil, nil }
+func (m *mockGateSPRepo) UpsertSAMLClient(_ *sp_entities.SAMLClient) error      { return nil }
+func (m *mockGateSPRepo) FindSubjectID(_ string, _ uint) (uint, error)          { return 0, nil }
+func (m *mockGateSPRepo) CreateAccessRule(_ *sp_entities.AccessRule) error      { return nil }
 func (m *mockGateSPRepo) FindAccessRuleByUUID(_ string) (*sp_entities.AccessRule, error) {
 	return nil, nil
 }

@@ -10,6 +10,7 @@ bruno/environments/*.yml
 .air.toml
 tmp/
 .vscode/
+.gopath/
 .gomodcache/
 .gocache/
 gomodcache/

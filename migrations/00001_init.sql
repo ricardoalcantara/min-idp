@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS oidc_clients (
     deleted_at             DATETIME,
     sp_id                  INTEGER NOT NULL UNIQUE,
     client_id              TEXT NOT NULL UNIQUE,
-    client_secret_hash     TEXT NOT NULL,
+    client_secret_hash     TEXT,
     redirect_uris          TEXT NOT NULL DEFAULT '[]',
     grant_types            TEXT NOT NULL DEFAULT '["authorization_code"]',
     response_types         TEXT NOT NULL DEFAULT '["code"]',

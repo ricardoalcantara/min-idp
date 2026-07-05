@@ -150,6 +150,34 @@ Configure your client library with:
 | Client Secret | `super-secret` |
 | Redirect URI | as registered above |
 
+#### OIDC public client (SPA)
+
+For browser-only apps (no client secret), register a **public** client with PKCE:
+
+```bash
+curl -X PUT http://localhost:8081/api/admin/sps/1/oidc \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "client_id": "my-spa",
+    "redirect_uris": ["http://localhost:5173/callback"],
+    "grant_types": ["authorization_code"],
+    "response_types": ["code"],
+    "scopes": ["openid","email","profile"],
+    "token_endpoint_auth": "none"
+  }'
+```
+
+`token_endpoint_auth: "none"` forces PKCE and does not allow a `client_secret`.
+
+The browser must call the token endpoint directly, so add the SPA origin to CORS:
+
+```
+MINSTACK_CORS_ORIGIN=http://localhost:5173
+```
+
+See `apps/oidc-public-test-sp/` for a working Vite + React example.
+
 ---
 
 ### SAML SP
@@ -228,7 +256,8 @@ Two test SP apps are included under `apps/`:
 
 | App | Protocol | Port | README |
 |---|---|---|---|
-| `oidc-test-sp` | OIDC (NextAuth v5) | 3001 | `apps/oidc-test-sp/` |
+| `oidc-test-sp` | OIDC confidential (Next.js) | 3001 | `apps/oidc-test-sp/` |
+| `oidc-public-test-sp` | OIDC public SPA (Vite + React) | 5173 | `apps/oidc-public-test-sp/` |
 | `saml-test-sp` | SAML 2.0 (node-saml) | 3002 | `apps/saml-test-sp/` |
 
 Each has a `.env.local.example` — copy it to `.env.local` and fill in the IdP values.

@@ -116,10 +116,20 @@ func (s *OIDCService) ValidateClient(clientID, clientSecret, redirectURI string)
 		return nil, ErrInvalidClient
 	}
 
-	if clientSecret != "" {
+	switch client.TokenEndpointAuth {
+	case "none":
+		if clientSecret != "" {
+			return nil, ErrInvalidClient
+		}
+	case "client_secret_basic", "client_secret_post":
+		if client.ClientSecretHash == "" || clientSecret == "" {
+			return nil, ErrInvalidClient
+		}
 		if err := localcrypto.VerifyPassword(client.ClientSecretHash, clientSecret); err != nil {
 			return nil, ErrInvalidClient
 		}
+	default:
+		return nil, ErrInvalidClient
 	}
 
 	if redirectURI != "" {
@@ -137,6 +147,20 @@ func (s *OIDCService) ValidateClient(clientID, clientSecret, redirectURI string)
 	}
 
 	return client, nil
+}
+
+// ValidateAuthorizeRequest checks PKCE requirements before issuing an auth code.
+func (s *OIDCService) ValidateAuthorizeRequest(client *sp_entities.OIDCClient, codeChallenge, codeChallengeMethod string) error {
+	if !client.PKCERequired {
+		return nil
+	}
+	if codeChallenge == "" {
+		return ErrInvalidRequest
+	}
+	if codeChallengeMethod != "S256" {
+		return ErrInvalidRequest
+	}
+	return nil
 }
 
 // ExchangeCode performs the auth code grant exchange.

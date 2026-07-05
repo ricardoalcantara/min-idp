@@ -61,7 +61,10 @@ func setupApp(t *testing.T) *testApp {
 		mgin.Module(),
 		storage.Module(),
 		kvstore.Module(),
-		migration.Module(migrations.FS),
+		migration.Module(
+			migrations.FS,
+			migration.WithGoMigrations(migrations.Go()...),
+		),
 	)
 
 	users.Register(app)

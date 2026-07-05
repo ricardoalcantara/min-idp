@@ -33,7 +33,7 @@ func Build(issuer string) DiscoveryDocument {
 		SubjectTypesSupported:         []string{"public"},
 		IDTokenSigningAlgValues:       []string{"ES256", "RS256"},
 		ScopesSupported:               []string{"openid", "profile", "email"},
-		TokenEndpointAuthMethods:      []string{"client_secret_basic", "client_secret_post"},
+		TokenEndpointAuthMethods:      []string{"none", "client_secret_basic", "client_secret_post"},
 		GrantTypesSupported:           []string{"authorization_code", "refresh_token"},
 		ClaimsSupported:               []string{"sub", "email", "name"},
 		CodeChallengeMethodsSupported: []string{"S256"},

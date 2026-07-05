@@ -6,8 +6,10 @@ import (
 
 	"github.com/go-minstack/go-minstack/repository"
 	"github.com/ricardoalcantara/min-idp/internal/db"
+	sp_dto "github.com/ricardoalcantara/min-idp/internal/sp/dto"
 	sp_entities "github.com/ricardoalcantara/min-idp/internal/sp/entities"
 	sp_repositories "github.com/ricardoalcantara/min-idp/internal/sp/repositories"
+	"github.com/ricardoalcantara/min-idp/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -100,4 +102,103 @@ func TestSPService_List_RepoError(t *testing.T) {
 	svc := newTestSPSvc(&mockSPRepo{err: errors.New("db down")})
 	_, err := svc.List()
 	assert.Error(t, err)
+}
+
+// --- UpsertOIDCClient ---
+
+type upsertOIDCRepo struct {
+	mockSPRepo
+	oidcClient *sp_entities.OIDCClient
+	upserted   *sp_entities.OIDCClient
+}
+
+func (m *upsertOIDCRepo) GetOIDCClient(_ uint) (*sp_entities.OIDCClient, error) {
+	if m.oidcClient == nil {
+		return nil, db.ErrEntityNotFound
+	}
+	return m.oidcClient, nil
+}
+
+func (m *upsertOIDCRepo) UpsertOIDCClient(c *sp_entities.OIDCClient) error {
+	m.upserted = c
+	return nil
+}
+
+func oidcSP() *sp_entities.ServiceProvider {
+	sp := &sp_entities.ServiceProvider{Protocol: types.SPProtocolOIDC}
+	sp.ID = 1
+	return sp
+}
+
+func TestSPService_UpsertOIDCClient_PublicClient_NoSecret(t *testing.T) {
+	repo := &upsertOIDCRepo{}
+	svc := newTestSPSvc(repo)
+
+	client, err := svc.UpsertOIDCClient(oidcSP(), sp_dto.UpsertOIDCClientDto{
+		ClientID:          "public-spa",
+		RedirectURIs:      []string{"http://localhost:5173/callback"},
+		TokenEndpointAuth: "none",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "none", client.TokenEndpointAuth)
+	assert.True(t, client.PKCERequired)
+	assert.Empty(t, client.ClientSecretHash)
+}
+
+func TestSPService_UpsertOIDCClient_Confidential_RequiresSecretOnCreate(t *testing.T) {
+	repo := &upsertOIDCRepo{}
+	svc := newTestSPSvc(repo)
+
+	_, err := svc.UpsertOIDCClient(oidcSP(), sp_dto.UpsertOIDCClientDto{
+		ClientID:          "confidential-app",
+		RedirectURIs:      []string{"http://localhost:3001/callback"},
+		TokenEndpointAuth: "client_secret_basic",
+	})
+	assert.ErrorIs(t, err, errSecretRequired)
+}
+
+func TestSPService_UpsertOIDCClient_Confidential_WithSecret(t *testing.T) {
+	repo := &upsertOIDCRepo{}
+	svc := newTestSPSvc(repo)
+
+	client, err := svc.UpsertOIDCClient(oidcSP(), sp_dto.UpsertOIDCClientDto{
+		ClientID:          "confidential-app",
+		ClientSecret:      "super-secret",
+		RedirectURIs:      []string{"http://localhost:3001/callback"},
+		TokenEndpointAuth: "client_secret_basic",
+		PKCERequired:      true,
+	})
+	require.NoError(t, err)
+	assert.NotEmpty(t, client.ClientSecretHash)
+	assert.True(t, client.PKCERequired)
+}
+
+func TestSPService_UpsertOIDCClient_Confidential_UpdatePreservesSecret(t *testing.T) {
+	repo := &upsertOIDCRepo{
+		oidcClient: &sp_entities.OIDCClient{
+			ClientSecretHash: "existing-hash",
+		},
+	}
+	svc := newTestSPSvc(repo)
+
+	client, err := svc.UpsertOIDCClient(oidcSP(), sp_dto.UpsertOIDCClientDto{
+		ClientID:          "confidential-app",
+		RedirectURIs:      []string{"http://localhost:3001/callback"},
+		TokenEndpointAuth: "client_secret_basic",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "existing-hash", client.ClientSecretHash)
+}
+
+func TestSPService_UpsertOIDCClient_Public_RejectsSecret(t *testing.T) {
+	repo := &upsertOIDCRepo{}
+	svc := newTestSPSvc(repo)
+
+	_, err := svc.UpsertOIDCClient(oidcSP(), sp_dto.UpsertOIDCClientDto{
+		ClientID:          "public-spa",
+		ClientSecret:      "not-allowed",
+		RedirectURIs:      []string{"http://localhost:5173/callback"},
+		TokenEndpointAuth: "none",
+	})
+	assert.ErrorIs(t, err, errSecretNotAllowed)
 }

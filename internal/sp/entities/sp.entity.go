@@ -18,7 +18,7 @@ type OIDCClient struct {
 	gorm.Model
 	SPID              uint   `gorm:"uniqueIndex;not null"`
 	ClientID          string `gorm:"uniqueIndex;not null"`
-	ClientSecretHash  string `gorm:"not null"`
+	ClientSecretHash  string
 	RedirectURIs      string `gorm:"default:'[]'"`
 	GrantTypes        string `gorm:"default:'[\"authorization_code\"]'"`
 	ResponseTypes     string `gorm:"default:'[\"code\"]'"`

@@ -238,7 +238,7 @@ components:
             type: string
         token_endpoint_auth:
           type: string
-          enum: [client_secret_basic, client_secret_post]
+          enum: [none, client_secret_basic, client_secret_post]
         pkce_required:
           type: boolean
 
@@ -246,10 +246,11 @@ components:
       allOf:
         - $ref: '#/components/schemas/OIDCClientDto'
         - type: object
-          required: [client_id, client_secret]
+          required: [client_id]
           properties:
             client_secret:
               type: string
+              description: Required when creating a confidential client. Must be omitted for public clients (`token_endpoint_auth` = `none`).
 
     SAMLClientDto:
       type: object

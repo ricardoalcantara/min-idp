@@ -85,6 +85,11 @@ func (c *OIDCController) authorize(ctx *gin.Context) {
 		return
 	}
 
+	if err := c.service.ValidateAuthorizeRequest(client, codeChallenge, codeChallengeMethod); err != nil {
+		c.redirectError(ctx, redirectURI, "invalid_request", state)
+		return
+	}
+
 	spEntity, err := c.service.spRepo.FindByID(client.SPID)
 	if err != nil {
 		c.redirectError(ctx, redirectURI, "server_error", state)

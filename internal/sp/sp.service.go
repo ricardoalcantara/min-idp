@@ -13,6 +13,9 @@ import (
 )
 
 var errProtocolMismatch = errors.New("operation not allowed for this SP protocol")
+var errSecretRequired = errors.New("client_secret is required for confidential clients")
+var errSecretNotAllowed = errors.New("client_secret is not allowed for public clients")
+var errInvalidTokenEndpointAuth = errors.New("invalid token_endpoint_auth")
 
 type SPRepository interface {
 	Create(sp *sp_entities.ServiceProvider) error
@@ -94,6 +97,18 @@ func (s *SPService) UpsertOIDCClient(sp *sp_entities.ServiceProvider, input sp_d
 	if sp.Protocol != types.SPProtocolOIDC {
 		return nil, errProtocolMismatch
 	}
+
+	authMethod := defaultString(input.TokenEndpointAuth, "client_secret_basic")
+	if authMethod != "none" && authMethod != "client_secret_basic" && authMethod != "client_secret_post" {
+		return nil, errInvalidTokenEndpointAuth
+	}
+
+	existing, existingErr := s.repo.GetOIDCClient(sp.ID)
+	isCreate := errors.Is(existingErr, dbpkg.ErrEntityNotFound)
+	if existingErr != nil && !isCreate {
+		return nil, existingErr
+	}
+
 	client := &sp_entities.OIDCClient{
 		SPID:              sp.ID,
 		ClientID:          input.ClientID,
@@ -101,21 +116,32 @@ func (s *SPService) UpsertOIDCClient(sp *sp_entities.ServiceProvider, input sp_d
 		GrantTypes:        sp_repositories.MarshalStringSlice(defaultStrings(input.GrantTypes, []string{"authorization_code"})),
 		ResponseTypes:     sp_repositories.MarshalStringSlice(defaultStrings(input.ResponseTypes, []string{"code"})),
 		Scopes:            sp_repositories.MarshalStringSlice(defaultStrings(input.Scopes, []string{"openid"})),
-		TokenEndpointAuth: defaultString(input.TokenEndpointAuth, "client_secret_basic"),
-		PKCERequired:      input.PKCERequired,
+		TokenEndpointAuth: authMethod,
 	}
-	if input.ClientSecret != "" {
-		from_crypto, err := hashSecret(input.ClientSecret)
-		if err != nil {
-			return nil, err
+
+	switch authMethod {
+	case "none":
+		if input.ClientSecret != "" {
+			return nil, errSecretNotAllowed
 		}
-		client.ClientSecretHash = from_crypto
-	} else {
-		existing, err := s.repo.GetOIDCClient(sp.ID)
-		if err == nil {
+		client.PKCERequired = true
+		client.ClientSecretHash = ""
+	default:
+		client.PKCERequired = input.PKCERequired
+		if input.ClientSecret != "" {
+			hash, err := hashSecret(input.ClientSecret)
+			if err != nil {
+				return nil, err
+			}
+			client.ClientSecretHash = hash
+		} else if !isCreate {
 			client.ClientSecretHash = existing.ClientSecretHash
 		}
+		if client.ClientSecretHash == "" {
+			return nil, errSecretRequired
+		}
 	}
+
 	return client, s.repo.UpsertOIDCClient(client)
 }
 

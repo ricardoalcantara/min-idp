@@ -1,0 +1,43 @@
+# Git and CI
+.git
+.github
+
+# IDE and local tooling
+.cursor
+.claude
+.vscode
+.air.toml
+tmp
+
+# Secrets and local env
+.env
+.env.*
+!.env.example
+docker-compose.override.yml
+
+# Go build artifacts and caches
+min-idp
+coverage.out
+.gopath
+.gomodcache
+.gocache
+gomodcache
+gocache
+
+# Databases
+*.db
+*.db-wal
+*.db-shm
+
+# Test SP apps and API clients (not part of the Go binary)
+apps
+bruno
+node_modules
+**/node_modules
+
+# Docs and agent context
+docs
+AGENTS.md
+CLAUDE.md
+ROADMAP.md
+README.md

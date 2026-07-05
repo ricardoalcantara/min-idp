@@ -7,7 +7,7 @@ require (
 	github.com/crewjam/saml v0.5.1
 	github.com/gin-gonic/gin v1.12.0
 	github.com/glebarez/sqlite v1.11.0
-	github.com/go-minstack/go-minstack v0.1.1-0.20260705205959-062e1a674b0a
+	github.com/go-minstack/go-minstack v0.2.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/pressly/goose/v3 v3.27.2

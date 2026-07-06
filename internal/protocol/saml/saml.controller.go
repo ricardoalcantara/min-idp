@@ -121,14 +121,11 @@ func normalisePostBinding(r *http.Request) *http.Request {
 
 func (c *SAMLController) slo(ctx *gin.Context) {
 	// Full SP-initiated SLO (SAMLRequest) is out of scope for v1.
-	// Handle the simple redirect case: SP clears its session and sends the user
-	// here with RelayState (return URL) and entity_id so we can show the logout page.
-	relayState := ctx.Query("RelayState")
+	// RelayState is opaque SP state — do not use it for IdP navigation.
 	entityID := ctx.Query("entity_id")
-
 	spName := c.samlSvc.SPNameByEntityID(entityID)
 
-	views.LogoutTmpl.Render(ctx, views.LogoutViewModel{SPName: spName, ReturnURL: relayState})
+	views.LogoutTmpl.Render(ctx, views.LogoutViewModel{SPName: spName})
 }
 
 func (c *SAMLController) buildIDP(ctx context.Context) (*crewjam.IdentityProvider, error) {

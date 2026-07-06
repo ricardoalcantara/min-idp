@@ -10,12 +10,12 @@ import (
 // --- ServiceProvider ---
 
 type SPDto struct {
-	ID        string    `json:"id"`
-	Slug      string    `json:"slug"`
-	Name      string    `json:"name"`
+	ID        string           `json:"id"`
+	Slug      string           `json:"slug"`
+	Name      string           `json:"name"`
 	Protocol  types.SPProtocol `json:"protocol"`
-	Enabled   bool      `json:"enabled"`
-	CreatedAt time.Time `json:"created_at"`
+	Enabled   bool             `json:"enabled"`
+	CreatedAt time.Time        `json:"created_at"`
 }
 
 func NewSPDto(s *sp_entities.ServiceProvider) SPDto {
@@ -43,24 +43,26 @@ type UpdateSPDto struct {
 // --- OIDC Client ---
 
 type OIDCClientDto struct {
-	ClientID          string   `json:"client_id"`
-	RedirectURIs      []string `json:"redirect_uris"`
-	GrantTypes        []string `json:"grant_types"`
-	ResponseTypes     []string `json:"response_types"`
-	Scopes            []string `json:"scopes"`
-	TokenEndpointAuth string   `json:"token_endpoint_auth"`
-	PKCERequired      bool     `json:"pkce_required"`
+	ClientID               string   `json:"client_id"`
+	RedirectURIs           []string `json:"redirect_uris"`
+	PostLogoutRedirectURIs []string `json:"post_logout_redirect_uris"`
+	GrantTypes             []string `json:"grant_types"`
+	ResponseTypes          []string `json:"response_types"`
+	Scopes                 []string `json:"scopes"`
+	TokenEndpointAuth      string   `json:"token_endpoint_auth"`
+	PKCERequired           bool     `json:"pkce_required"`
 }
 
 type UpsertOIDCClientDto struct {
-	ClientID          string   `json:"client_id"           binding:"required"`
-	ClientSecret      string   `json:"client_secret"`
-	RedirectURIs      []string `json:"redirect_uris"        binding:"required"`
-	GrantTypes        []string `json:"grant_types"`
-	ResponseTypes     []string `json:"response_types"`
-	Scopes            []string `json:"scopes"`
-	TokenEndpointAuth string   `json:"token_endpoint_auth"`
-	PKCERequired      bool     `json:"pkce_required"`
+	ClientID               string   `json:"client_id"                    binding:"required"`
+	ClientSecret           string   `json:"client_secret"`
+	RedirectURIs           []string `json:"redirect_uris"                binding:"required"`
+	PostLogoutRedirectURIs []string `json:"post_logout_redirect_uris"    binding:"required"`
+	GrantTypes             []string `json:"grant_types"`
+	ResponseTypes          []string `json:"response_types"`
+	Scopes                 []string `json:"scopes"`
+	TokenEndpointAuth      string   `json:"token_endpoint_auth"`
+	PKCERequired           bool     `json:"pkce_required"`
 }
 
 // --- SAML Client ---

@@ -264,27 +264,27 @@ func (c *OIDCController) introspect(ctx *gin.Context) {
 
 func (c *OIDCController) logout(ctx *gin.Context) {
 	redirectURI := ctx.Query("post_logout_redirect_uri")
+	clientID := ctx.Query("client_id")
 	idTokenHint := ctx.Query("id_token_hint")
 
 	// Do NOT clear the IdP session yet — the user can choose to:
 	//   • Log back into the app (SSO, no credentials needed — session still alive)
 	//   • Sign out of min-idp (clears the session via /api/auth/logout)
 
-	// Resolve SP display name from id_token_hint audience
 	spName := "the application"
-	if idTokenHint != "" {
-		if claims, err := jwtutil.PayloadClaims(idTokenHint); err == nil {
-			if aud, ok := claims["aud"].(string); ok && aud != "" {
-				if client, err := c.service.spRepo.FindOIDCClientByClientID(aud); err == nil {
-					if spEntity, err := c.service.spRepo.FindByID(client.SPID); err == nil {
-						spName = spEntity.Name
-					}
-				}
-			}
+	returnURL := ""
+
+	client, err := c.service.ResolveLogoutClient(clientID, idTokenHint)
+	if err == nil && client != nil {
+		if spEntity, spErr := c.service.spRepo.FindByID(client.SPID); spErr == nil {
+			spName = spEntity.Name
+		}
+		if redirectURI != "" && c.service.ValidatePostLogoutRedirectURI(client, redirectURI) == nil {
+			returnURL = redirectURI
 		}
 	}
 
-	views.LogoutTmpl.Render(ctx, views.LogoutViewModel{SPName: spName, ReturnURL: redirectURI})
+	views.LogoutTmpl.Render(ctx, views.LogoutViewModel{SPName: spName, ReturnURL: returnURL})
 }
 
 func (c *OIDCController) extractSessionUUIDFromToken(tokenStr string) string {

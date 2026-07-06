@@ -27,6 +27,7 @@ Browser-only OIDC client for [min-idp](../../README.md). Uses the authorization 
      -d '{
        "client_id": "oidc-public-test-sp",
        "redirect_uris": ["http://localhost:5173/callback"],
+       "post_logout_redirect_uris": ["http://localhost:5173/"],
        "token_endpoint_auth": "none"
      }'
    ```

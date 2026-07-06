@@ -9,13 +9,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	localcrypto "github.com/ricardoalcantara/min-idp/internal/crypto"
 	"github.com/ricardoalcantara/min-idp/internal/config"
+	localcrypto "github.com/ricardoalcantara/min-idp/internal/crypto"
+	"github.com/ricardoalcantara/min-idp/internal/jwtutil"
 	"github.com/ricardoalcantara/min-idp/internal/keystore"
 	keystore_entities "github.com/ricardoalcantara/min-idp/internal/keystore/entities"
 	"github.com/ricardoalcantara/min-idp/internal/kvstore"
@@ -29,12 +31,13 @@ import (
 )
 
 var (
-	ErrInvalidClient       = errors.New("invalid client")
-	ErrInvalidGrant        = errors.New("invalid grant")
-	ErrUnsupportedGrant    = errors.New("unsupported grant type")
-	ErrInvalidRedirectURI  = errors.New("invalid redirect uri")
-	ErrInvalidRequest      = errors.New("invalid request")
-	ErrAccessDenied        = errors.New("access denied")
+	ErrInvalidClient                = errors.New("invalid client")
+	ErrInvalidGrant                 = errors.New("invalid grant")
+	ErrUnsupportedGrant             = errors.New("unsupported grant type")
+	ErrInvalidRedirectURI           = errors.New("invalid redirect uri")
+	ErrInvalidPostLogoutRedirectURI = errors.New("invalid post_logout_redirect_uri")
+	ErrInvalidRequest               = errors.New("invalid request")
+	ErrAccessDenied                 = errors.New("access denied")
 )
 
 type OAuthTokenRepository interface {
@@ -42,7 +45,6 @@ type OAuthTokenRepository interface {
 	FindByHash(hash string) (*oidc_entities.OAuthToken, error)
 	RevokeToken(hash string) error
 }
-
 
 type AuthCodeData struct {
 	ClientID            string `json:"client_id"`
@@ -146,6 +148,63 @@ func (s *OIDCService) ValidateClient(clientID, clientSecret, redirectURI string)
 		}
 	}
 
+	return client, nil
+}
+
+func isSafeRedirectURI(uri string) bool {
+	u, err := url.Parse(uri)
+	if err != nil || u.Scheme == "" || u.Host == "" {
+		return false
+	}
+	switch strings.ToLower(u.Scheme) {
+	case "http", "https":
+		return true
+	default:
+		return false
+	}
+}
+
+// ValidatePostLogoutRedirectURI checks post_logout_redirect_uri against the client allowlist.
+func (s *OIDCService) ValidatePostLogoutRedirectURI(client *sp_entities.OIDCClient, uri string) error {
+	if uri == "" {
+		return nil
+	}
+	if !isSafeRedirectURI(uri) {
+		return ErrInvalidPostLogoutRedirectURI
+	}
+	validURIs := sp_repositories.UnmarshalStringSlice(client.PostLogoutRedirectURIs)
+	for _, allowed := range validURIs {
+		if allowed == uri {
+			return nil
+		}
+	}
+	return ErrInvalidPostLogoutRedirectURI
+}
+
+// ResolveLogoutClient identifies the OIDC client from logout request parameters.
+func (s *OIDCService) ResolveLogoutClient(clientID, idTokenHint string) (*sp_entities.OIDCClient, error) {
+	if clientID != "" {
+		client, err := s.spRepo.FindOIDCClientByClientID(clientID)
+		if err != nil {
+			return nil, ErrInvalidClient
+		}
+		return client, nil
+	}
+	if idTokenHint == "" {
+		return nil, ErrInvalidClient
+	}
+	claims, err := jwtutil.PayloadClaims(idTokenHint)
+	if err != nil {
+		return nil, ErrInvalidClient
+	}
+	aud, ok := claims["aud"].(string)
+	if !ok || aud == "" {
+		return nil, ErrInvalidClient
+	}
+	client, err := s.spRepo.FindOIDCClientByClientID(aud)
+	if err != nil {
+		return nil, ErrInvalidClient
+	}
 	return client, nil
 }
 
@@ -367,10 +426,10 @@ func (s *OIDCService) GetUserInfo(ctx context.Context, accessToken string) (*oid
 		return nil, errors.New("token revoked or expired")
 	}
 
-	sub, _      := claims["sub"].(string)
-	email, _    := claims["email"].(string)
+	sub, _ := claims["sub"].(string)
+	email, _ := claims["email"].(string)
 	username, _ := claims["username"].(string)
-	name, _     := claims["name"].(string)
+	name, _ := claims["name"].(string)
 
 	var roles []string
 	if rArr, ok := claims["roles"].([]interface{}); ok {
@@ -382,11 +441,11 @@ func (s *OIDCService) GetUserInfo(ctx context.Context, accessToken string) (*oid
 	}
 
 	return &oidc_dto.UserInfoResponse{
-		Sub:               sub,
-		Email:             email,
+		Sub:      sub,
+		Email:    email,
 		Username: username,
-		Name:              name,
-		Roles:             roles,
+		Name:     name,
+		Roles:    roles,
 	}, nil
 }
 

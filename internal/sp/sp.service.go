@@ -110,13 +110,14 @@ func (s *SPService) UpsertOIDCClient(sp *sp_entities.ServiceProvider, input sp_d
 	}
 
 	client := &sp_entities.OIDCClient{
-		SPID:              sp.ID,
-		ClientID:          input.ClientID,
-		RedirectURIs:      sp_repositories.MarshalStringSlice(input.RedirectURIs),
-		GrantTypes:        sp_repositories.MarshalStringSlice(defaultStrings(input.GrantTypes, []string{"authorization_code"})),
-		ResponseTypes:     sp_repositories.MarshalStringSlice(defaultStrings(input.ResponseTypes, []string{"code"})),
-		Scopes:            sp_repositories.MarshalStringSlice(defaultStrings(input.Scopes, []string{"openid"})),
-		TokenEndpointAuth: authMethod,
+		SPID:                   sp.ID,
+		ClientID:               input.ClientID,
+		RedirectURIs:           sp_repositories.MarshalStringSlice(input.RedirectURIs),
+		PostLogoutRedirectURIs: sp_repositories.MarshalStringSlice(input.PostLogoutRedirectURIs),
+		GrantTypes:             sp_repositories.MarshalStringSlice(defaultStrings(input.GrantTypes, []string{"authorization_code"})),
+		ResponseTypes:          sp_repositories.MarshalStringSlice(defaultStrings(input.ResponseTypes, []string{"code"})),
+		Scopes:                 sp_repositories.MarshalStringSlice(defaultStrings(input.Scopes, []string{"openid"})),
+		TokenEndpointAuth:      authMethod,
 	}
 
 	switch authMethod {

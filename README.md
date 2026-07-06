@@ -125,6 +125,7 @@ curl -X PUT http://localhost:8081/api/admin/sps/1/oidc \
     "client_id": "my-app-client",
     "client_secret": "super-secret",
     "redirect_uris": ["http://localhost:3001/api/auth/callback"],
+    "post_logout_redirect_uris": ["http://localhost:3001/"],
     "grant_types": ["authorization_code"],
     "response_types": ["code"],
     "scopes": ["openid","email","profile"],
@@ -161,6 +162,7 @@ curl -X PUT http://localhost:8081/api/admin/sps/1/oidc \
   -d '{
     "client_id": "my-spa",
     "redirect_uris": ["http://localhost:5173/callback"],
+    "post_logout_redirect_uris": ["http://localhost:5173/"],
     "grant_types": ["authorization_code"],
     "response_types": ["code"],
     "scopes": ["openid","email","profile"],

@@ -224,6 +224,10 @@ components:
           type: array
           items:
             type: string
+        post_logout_redirect_uris:
+          type: array
+          items:
+            type: string
         grant_types:
           type: array
           items:

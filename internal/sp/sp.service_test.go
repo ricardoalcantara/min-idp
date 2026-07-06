@@ -135,9 +135,10 @@ func TestSPService_UpsertOIDCClient_PublicClient_NoSecret(t *testing.T) {
 	svc := newTestSPSvc(repo)
 
 	client, err := svc.UpsertOIDCClient(oidcSP(), sp_dto.UpsertOIDCClientDto{
-		ClientID:          "public-spa",
-		RedirectURIs:      []string{"http://localhost:5173/callback"},
-		TokenEndpointAuth: "none",
+		ClientID:               "public-spa",
+		RedirectURIs:           []string{"http://localhost:5173/callback"},
+		PostLogoutRedirectURIs: []string{"http://localhost:5173/"},
+		TokenEndpointAuth:      "none",
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "none", client.TokenEndpointAuth)
@@ -150,9 +151,10 @@ func TestSPService_UpsertOIDCClient_Confidential_RequiresSecretOnCreate(t *testi
 	svc := newTestSPSvc(repo)
 
 	_, err := svc.UpsertOIDCClient(oidcSP(), sp_dto.UpsertOIDCClientDto{
-		ClientID:          "confidential-app",
-		RedirectURIs:      []string{"http://localhost:3001/callback"},
-		TokenEndpointAuth: "client_secret_basic",
+		ClientID:               "confidential-app",
+		RedirectURIs:           []string{"http://localhost:3001/callback"},
+		PostLogoutRedirectURIs: []string{"http://localhost:3001/"},
+		TokenEndpointAuth:      "client_secret_basic",
 	})
 	assert.ErrorIs(t, err, errSecretRequired)
 }
@@ -162,11 +164,12 @@ func TestSPService_UpsertOIDCClient_Confidential_WithSecret(t *testing.T) {
 	svc := newTestSPSvc(repo)
 
 	client, err := svc.UpsertOIDCClient(oidcSP(), sp_dto.UpsertOIDCClientDto{
-		ClientID:          "confidential-app",
-		ClientSecret:      "super-secret",
-		RedirectURIs:      []string{"http://localhost:3001/callback"},
-		TokenEndpointAuth: "client_secret_basic",
-		PKCERequired:      true,
+		ClientID:               "confidential-app",
+		ClientSecret:           "super-secret",
+		RedirectURIs:           []string{"http://localhost:3001/callback"},
+		PostLogoutRedirectURIs: []string{"http://localhost:3001/"},
+		TokenEndpointAuth:      "client_secret_basic",
+		PKCERequired:           true,
 	})
 	require.NoError(t, err)
 	assert.NotEmpty(t, client.ClientSecretHash)
@@ -182,9 +185,10 @@ func TestSPService_UpsertOIDCClient_Confidential_UpdatePreservesSecret(t *testin
 	svc := newTestSPSvc(repo)
 
 	client, err := svc.UpsertOIDCClient(oidcSP(), sp_dto.UpsertOIDCClientDto{
-		ClientID:          "confidential-app",
-		RedirectURIs:      []string{"http://localhost:3001/callback"},
-		TokenEndpointAuth: "client_secret_basic",
+		ClientID:               "confidential-app",
+		RedirectURIs:           []string{"http://localhost:3001/callback"},
+		PostLogoutRedirectURIs: []string{"http://localhost:3001/"},
+		TokenEndpointAuth:      "client_secret_basic",
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "existing-hash", client.ClientSecretHash)
@@ -195,10 +199,11 @@ func TestSPService_UpsertOIDCClient_Public_RejectsSecret(t *testing.T) {
 	svc := newTestSPSvc(repo)
 
 	_, err := svc.UpsertOIDCClient(oidcSP(), sp_dto.UpsertOIDCClientDto{
-		ClientID:          "public-spa",
-		ClientSecret:      "not-allowed",
-		RedirectURIs:      []string{"http://localhost:5173/callback"},
-		TokenEndpointAuth: "none",
+		ClientID:               "public-spa",
+		ClientSecret:           "not-allowed",
+		RedirectURIs:           []string{"http://localhost:5173/callback"},
+		PostLogoutRedirectURIs: []string{"http://localhost:5173/"},
+		TokenEndpointAuth:      "none",
 	})
 	assert.ErrorIs(t, err, errSecretNotAllowed)
 }

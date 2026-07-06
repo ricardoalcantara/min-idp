@@ -30,7 +30,7 @@ func (m *mockOIDCSPRepo) FindAll(_ ...repository.QueryOption) ([]sp_entities.Ser
 	return nil, m.err
 }
 func (m *mockOIDCSPRepo) Update(_ *sp_entities.ServiceProvider) error { return m.err }
-func (m *mockOIDCSPRepo) Delete(_ uint) error                       { return m.err }
+func (m *mockOIDCSPRepo) Delete(_ uint) error                         { return m.err }
 func (m *mockOIDCSPRepo) GetOIDCClient(_ uint) (*sp_entities.OIDCClient, error) {
 	return nil, m.err
 }
@@ -51,7 +51,7 @@ func (m *mockOIDCSPRepo) UpsertSAMLClient(_ *sp_entities.SAMLClient) error { ret
 func (m *mockOIDCSPRepo) ListAccessRules(_ uint) ([]sp_repositories.AccessRuleRow, error) {
 	return nil, m.err
 }
-func (m *mockOIDCSPRepo) FindSubjectID(_ string, _ uint) (uint, error)    { return 0, m.err }
+func (m *mockOIDCSPRepo) FindSubjectID(_ string, _ uint) (uint, error)     { return 0, m.err }
 func (m *mockOIDCSPRepo) CreateAccessRule(_ *sp_entities.AccessRule) error { return m.err }
 func (m *mockOIDCSPRepo) FindAccessRuleByUUID(_ string) (*sp_entities.AccessRule, error) {
 	return nil, m.err
@@ -175,4 +175,54 @@ func TestOIDCService_ValidateClient_NotFound(t *testing.T) {
 	svc := newTestOIDCService(&mockOIDCSPRepo{err: db.ErrEntityNotFound})
 	_, err := svc.ValidateClient("missing", "", "")
 	assert.ErrorIs(t, err, ErrInvalidClient)
+}
+
+func TestOIDCService_ValidatePostLogoutRedirectURI_Allowed(t *testing.T) {
+	svc := newTestOIDCService(&mockOIDCSPRepo{})
+	client := &sp_entities.OIDCClient{
+		PostLogoutRedirectURIs: `["http://localhost:5173/"]`,
+	}
+	err := svc.ValidatePostLogoutRedirectURI(client, "http://localhost:5173/")
+	assert.NoError(t, err)
+}
+
+func TestOIDCService_ValidatePostLogoutRedirectURI_NotInList(t *testing.T) {
+	svc := newTestOIDCService(&mockOIDCSPRepo{})
+	client := &sp_entities.OIDCClient{
+		PostLogoutRedirectURIs: `["http://localhost:5173/"]`,
+	}
+	err := svc.ValidatePostLogoutRedirectURI(client, "https://evil.example/")
+	assert.ErrorIs(t, err, ErrInvalidPostLogoutRedirectURI)
+}
+
+func TestOIDCService_ValidatePostLogoutRedirectURI_EmptyURI(t *testing.T) {
+	svc := newTestOIDCService(&mockOIDCSPRepo{})
+	client := &sp_entities.OIDCClient{PostLogoutRedirectURIs: `[]`}
+	err := svc.ValidatePostLogoutRedirectURI(client, "")
+	assert.NoError(t, err)
+}
+
+func TestOIDCService_ValidatePostLogoutRedirectURI_EmptyAllowlist(t *testing.T) {
+	svc := newTestOIDCService(&mockOIDCSPRepo{})
+	client := &sp_entities.OIDCClient{PostLogoutRedirectURIs: `[]`}
+	err := svc.ValidatePostLogoutRedirectURI(client, "http://localhost:5173/")
+	assert.ErrorIs(t, err, ErrInvalidPostLogoutRedirectURI)
+}
+
+func TestOIDCService_ValidatePostLogoutRedirectURI_UnsafeScheme(t *testing.T) {
+	svc := newTestOIDCService(&mockOIDCSPRepo{})
+	client := &sp_entities.OIDCClient{
+		PostLogoutRedirectURIs: `["javascript:alert(1)"]`,
+	}
+	err := svc.ValidatePostLogoutRedirectURI(client, "javascript:alert(1)")
+	assert.ErrorIs(t, err, ErrInvalidPostLogoutRedirectURI)
+}
+
+func TestOIDCService_ResolveLogoutClient_FromClientID(t *testing.T) {
+	svc := newTestOIDCService(&mockOIDCSPRepo{
+		client: &sp_entities.OIDCClient{ClientID: "my-app"},
+	})
+	client, err := svc.ResolveLogoutClient("my-app", "")
+	require.NoError(t, err)
+	assert.Equal(t, "my-app", client.ClientID)
 }

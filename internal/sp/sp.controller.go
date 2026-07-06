@@ -122,13 +122,14 @@ func (c *SPController) getOIDC(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, sp_dto.OIDCClientDto{
-		ClientID:          client.ClientID,
-		RedirectURIs:      sp_repositories.UnmarshalStringSlice(client.RedirectURIs),
-		GrantTypes:        sp_repositories.UnmarshalStringSlice(client.GrantTypes),
-		ResponseTypes:     sp_repositories.UnmarshalStringSlice(client.ResponseTypes),
-		Scopes:            sp_repositories.UnmarshalStringSlice(client.Scopes),
-		TokenEndpointAuth: client.TokenEndpointAuth,
-		PKCERequired:      client.PKCERequired,
+		ClientID:               client.ClientID,
+		RedirectURIs:           sp_repositories.UnmarshalStringSlice(client.RedirectURIs),
+		PostLogoutRedirectURIs: sp_repositories.UnmarshalStringSlice(client.PostLogoutRedirectURIs),
+		GrantTypes:             sp_repositories.UnmarshalStringSlice(client.GrantTypes),
+		ResponseTypes:          sp_repositories.UnmarshalStringSlice(client.ResponseTypes),
+		Scopes:                 sp_repositories.UnmarshalStringSlice(client.Scopes),
+		TokenEndpointAuth:      client.TokenEndpointAuth,
+		PKCERequired:           client.PKCERequired,
 	})
 }
 
@@ -157,13 +158,14 @@ func (c *SPController) putOIDC(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, sp_dto.OIDCClientDto{
-		ClientID:          client.ClientID,
-		RedirectURIs:      sp_repositories.UnmarshalStringSlice(client.RedirectURIs),
-		GrantTypes:        sp_repositories.UnmarshalStringSlice(client.GrantTypes),
-		ResponseTypes:     sp_repositories.UnmarshalStringSlice(client.ResponseTypes),
-		Scopes:            sp_repositories.UnmarshalStringSlice(client.Scopes),
-		TokenEndpointAuth: client.TokenEndpointAuth,
-		PKCERequired:      client.PKCERequired,
+		ClientID:               client.ClientID,
+		RedirectURIs:           sp_repositories.UnmarshalStringSlice(client.RedirectURIs),
+		PostLogoutRedirectURIs: sp_repositories.UnmarshalStringSlice(client.PostLogoutRedirectURIs),
+		GrantTypes:             sp_repositories.UnmarshalStringSlice(client.GrantTypes),
+		ResponseTypes:          sp_repositories.UnmarshalStringSlice(client.ResponseTypes),
+		Scopes:                 sp_repositories.UnmarshalStringSlice(client.Scopes),
+		TokenEndpointAuth:      client.TokenEndpointAuth,
+		PKCERequired:           client.PKCERequired,
 	})
 }
 

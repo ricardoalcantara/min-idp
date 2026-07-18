@@ -349,6 +349,7 @@ defer app.Stop(ctx)
 - Do not add DB imports to a package unless it actually uses them
 - Do not treat `repository` like an infrastructure module
 - Do not manually add `logger.Module()` or `core.Module()` in a normal `core.New(...)` app
+- **Never add `Co-Authored-By` (or any co-author trailer) to commit messages** — not for Cursor, agents, bots, or tools. If a hook or template injects one, strip it before finishing the commit.
 
 ## AI Guidance
 
@@ -361,6 +362,7 @@ When changing or generating code for a go-minstack app:
 - keep comments minimal
 - use explicit module composition instead of magic behavior
 - when requirements are unclear, preserve the existing package boundaries
+- **NEVER add `Co-Authored-By` trailers to git commits, ever.** Commit messages must contain only the change description — no AI/tool co-author attribution.
 
 ## Good References
 

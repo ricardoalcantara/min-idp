@@ -181,6 +181,69 @@ func (s *OIDCService) ValidatePostLogoutRedirectURI(client *sp_entities.OIDCClie
 	return ErrInvalidPostLogoutRedirectURI
 }
 
+// ValidateOrDiscoverPostLogoutRedirectURI validates post_logout_redirect_uri.
+// When the client's allowlist is empty, a URI whose origin matches a registered
+// redirect_uri is accepted and persisted as a discovered allowlist entry.
+func (s *OIDCService) ValidateOrDiscoverPostLogoutRedirectURI(client *sp_entities.OIDCClient, uri string) error {
+	if uri == "" {
+		return nil
+	}
+	if !isSafeRedirectURI(uri) {
+		return ErrInvalidPostLogoutRedirectURI
+	}
+
+	allowlist := sp_repositories.UnmarshalStringSlice(client.PostLogoutRedirectURIs)
+	if len(allowlist) > 0 {
+		return s.ValidatePostLogoutRedirectURI(client, uri)
+	}
+
+	candidate, err := url.Parse(uri)
+	if err != nil {
+		return ErrInvalidPostLogoutRedirectURI
+	}
+	for _, redirectURI := range sp_repositories.UnmarshalStringSlice(client.RedirectURIs) {
+		registered, err := url.Parse(redirectURI)
+		if err != nil || !isSafeRedirectURI(redirectURI) {
+			continue
+		}
+		if sameOrigin(candidate, registered) {
+			client.PostLogoutRedirectURIs = sp_repositories.MarshalStringSlice([]string{uri})
+			if err := s.spRepo.UpsertOIDCClient(client); err != nil {
+				return err
+			}
+			return nil
+		}
+	}
+	return ErrInvalidPostLogoutRedirectURI
+}
+
+func sameOrigin(a, b *url.URL) bool {
+	if a == nil || b == nil {
+		return false
+	}
+	if !strings.EqualFold(a.Scheme, b.Scheme) {
+		return false
+	}
+	if !strings.EqualFold(a.Hostname(), b.Hostname()) {
+		return false
+	}
+	return effectivePort(a) == effectivePort(b)
+}
+
+func effectivePort(u *url.URL) string {
+	if port := u.Port(); port != "" {
+		return port
+	}
+	switch strings.ToLower(u.Scheme) {
+	case "http":
+		return "80"
+	case "https":
+		return "443"
+	default:
+		return ""
+	}
+}
+
 // ResolveLogoutClient identifies the OIDC client from logout request parameters.
 func (s *OIDCService) ResolveLogoutClient(clientID, idTokenHint string) (*sp_entities.OIDCClient, error) {
 	if clientID != "" {

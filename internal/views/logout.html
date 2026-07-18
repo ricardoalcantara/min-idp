@@ -61,11 +61,11 @@
     <p class="sub">Your session with <strong>{{.SPName}}</strong> has ended.</p>
     <div class="divider"></div>
     {{if .ReturnURL}}
-    <a class="btn btn-primary" href="{{.ReturnURL}}">Log back into {{.SPName}}</a>
+    <a class="btn btn-primary" href="{{.ReturnURL}}">{{if .PublicClient}}Return to {{.SPName}}{{else}}Log back into {{.SPName}}{{end}}</a>
     {{else}}
     <a class="btn btn-primary" href="/info">Stay signed in to min-idp</a>
     {{end}}
-    <form method="POST" action="/api/auth/logout?redirect=/info" style="margin:0">
+    <form method="POST" action="/api/auth/logout?redirect={{if .ReturnURL}}{{.ReturnURL}}{{else}}/info{{end}}" style="margin:0">
       <button class="btn btn-secondary" type="submit">Sign out of min-idp</button>
     </form>
   </div>

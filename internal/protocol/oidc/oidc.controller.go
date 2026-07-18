@@ -273,18 +273,20 @@ func (c *OIDCController) logout(ctx *gin.Context) {
 
 	spName := "the application"
 	returnURL := ""
+	publicClient := false
 
 	client, err := c.service.ResolveLogoutClient(clientID, idTokenHint)
 	if err == nil && client != nil {
 		if spEntity, spErr := c.service.spRepo.FindByID(client.SPID); spErr == nil {
 			spName = spEntity.Name
 		}
-		if redirectURI != "" && c.service.ValidatePostLogoutRedirectURI(client, redirectURI) == nil {
+		if redirectURI != "" && c.service.ValidateOrDiscoverPostLogoutRedirectURI(client, redirectURI) == nil {
 			returnURL = redirectURI
 		}
+		publicClient = client.TokenEndpointAuth == "none"
 	}
 
-	views.LogoutTmpl.Render(ctx, views.LogoutViewModel{SPName: spName, ReturnURL: returnURL})
+	views.LogoutTmpl.Render(ctx, views.LogoutViewModel{SPName: spName, ReturnURL: returnURL, PublicClient: publicClient})
 }
 
 func (c *OIDCController) extractSessionUUIDFromToken(tokenStr string) string {

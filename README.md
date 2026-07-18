@@ -109,7 +109,10 @@ You can use the bootstrapped client immediately — no admin API calls required.
 | Scopes | `openid` (profile/email as needed) |
 
 Authorize endpoint: `http://localhost:8080/oauth2/authorize`  
-Token endpoint: `http://localhost:8080/oauth2/token`
+Token endpoint: `http://localhost:8080/oauth2/token`  
+Logout endpoint: `http://localhost:8080/oauth2/logout`
+
+If `post_logout_redirect_uris` is empty, the first `post_logout_redirect_uri` whose **origin** matches a registered `redirect_uri` is auto-discovered and saved on the client. After that, only exact allowlist matches are accepted.
 
 Sign in at the IdP login page with the admin user (or any user that has the `sp:login` role). With no access rules on the SP, anyone with `sp:login` can SSO.
 

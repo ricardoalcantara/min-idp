@@ -14,8 +14,10 @@ import (
 )
 
 type mockOIDCSPRepo struct {
-	client *sp_entities.OIDCClient
-	err    error
+	client         *sp_entities.OIDCClient
+	err            error
+	upsertedClient *sp_entities.OIDCClient
+	upsertCalls    int
 }
 
 func (m *mockOIDCSPRepo) Create(_ *sp_entities.ServiceProvider) error { return m.err }
@@ -40,7 +42,15 @@ func (m *mockOIDCSPRepo) FindOIDCClientByClientID(_ string) (*sp_entities.OIDCCl
 	}
 	return m.client, nil
 }
-func (m *mockOIDCSPRepo) UpsertOIDCClient(_ *sp_entities.OIDCClient) error { return m.err }
+func (m *mockOIDCSPRepo) UpsertOIDCClient(c *sp_entities.OIDCClient) error {
+	m.upsertCalls++
+	if m.err != nil {
+		return m.err
+	}
+	m.upsertedClient = c
+	m.client = c
+	return nil
+}
 func (m *mockOIDCSPRepo) GetSAMLClient(_ uint) (*sp_entities.SAMLClient, error) {
 	return nil, m.err
 }
@@ -216,6 +226,89 @@ func TestOIDCService_ValidatePostLogoutRedirectURI_UnsafeScheme(t *testing.T) {
 	}
 	err := svc.ValidatePostLogoutRedirectURI(client, "javascript:alert(1)")
 	assert.ErrorIs(t, err, ErrInvalidPostLogoutRedirectURI)
+}
+
+func TestOIDCService_ValidateOrDiscoverPostLogoutRedirectURI_DiscoverSameOrigin(t *testing.T) {
+	repo := &mockOIDCSPRepo{}
+	svc := newTestOIDCService(repo)
+	client := &sp_entities.OIDCClient{
+		RedirectURIs:           `["http://localhost:5173/callback"]`,
+		PostLogoutRedirectURIs: `[]`,
+	}
+
+	err := svc.ValidateOrDiscoverPostLogoutRedirectURI(client, "http://localhost:5173/")
+	require.NoError(t, err)
+	assert.Equal(t, 1, repo.upsertCalls)
+	require.NotNil(t, repo.upsertedClient)
+	assert.Equal(t, `["http://localhost:5173/"]`, repo.upsertedClient.PostLogoutRedirectURIs)
+	assert.Equal(t, `["http://localhost:5173/"]`, client.PostLogoutRedirectURIs)
+}
+
+func TestOIDCService_ValidateOrDiscoverPostLogoutRedirectURI_DifferentPort(t *testing.T) {
+	repo := &mockOIDCSPRepo{}
+	svc := newTestOIDCService(repo)
+	client := &sp_entities.OIDCClient{
+		RedirectURIs:           `["http://localhost:5173/callback"]`,
+		PostLogoutRedirectURIs: `[]`,
+	}
+
+	err := svc.ValidateOrDiscoverPostLogoutRedirectURI(client, "http://localhost:3000/")
+	assert.ErrorIs(t, err, ErrInvalidPostLogoutRedirectURI)
+	assert.Equal(t, 0, repo.upsertCalls)
+}
+
+func TestOIDCService_ValidateOrDiscoverPostLogoutRedirectURI_DifferentDomain(t *testing.T) {
+	repo := &mockOIDCSPRepo{}
+	svc := newTestOIDCService(repo)
+	client := &sp_entities.OIDCClient{
+		RedirectURIs:           `["http://localhost:5173/callback"]`,
+		PostLogoutRedirectURIs: `[]`,
+	}
+
+	err := svc.ValidateOrDiscoverPostLogoutRedirectURI(client, "https://evil.example/")
+	assert.ErrorIs(t, err, ErrInvalidPostLogoutRedirectURI)
+	assert.Equal(t, 0, repo.upsertCalls)
+}
+
+func TestOIDCService_ValidateOrDiscoverPostLogoutRedirectURI_EmptyRedirectURIs(t *testing.T) {
+	repo := &mockOIDCSPRepo{}
+	svc := newTestOIDCService(repo)
+	client := &sp_entities.OIDCClient{
+		RedirectURIs:           `[]`,
+		PostLogoutRedirectURIs: `[]`,
+	}
+
+	err := svc.ValidateOrDiscoverPostLogoutRedirectURI(client, "http://localhost:5173/")
+	assert.ErrorIs(t, err, ErrInvalidPostLogoutRedirectURI)
+	assert.Equal(t, 0, repo.upsertCalls)
+}
+
+func TestOIDCService_ValidateOrDiscoverPostLogoutRedirectURI_NonEmptyAllowlistNoDiscovery(t *testing.T) {
+	repo := &mockOIDCSPRepo{}
+	svc := newTestOIDCService(repo)
+	client := &sp_entities.OIDCClient{
+		RedirectURIs:           `["http://localhost:5173/callback"]`,
+		PostLogoutRedirectURIs: `["http://localhost:5173/"]`,
+	}
+
+	err := svc.ValidateOrDiscoverPostLogoutRedirectURI(client, "http://localhost:5173/after-logout")
+	assert.ErrorIs(t, err, ErrInvalidPostLogoutRedirectURI)
+	assert.Equal(t, 0, repo.upsertCalls)
+}
+
+func TestOIDCService_ValidateOrDiscoverPostLogoutRedirectURI_DefaultPortNormalization(t *testing.T) {
+	repo := &mockOIDCSPRepo{}
+	svc := newTestOIDCService(repo)
+	client := &sp_entities.OIDCClient{
+		RedirectURIs:           `["https://app.example.com/cb"]`,
+		PostLogoutRedirectURIs: `[]`,
+	}
+
+	err := svc.ValidateOrDiscoverPostLogoutRedirectURI(client, "https://app.example.com:443/done")
+	require.NoError(t, err)
+	assert.Equal(t, 1, repo.upsertCalls)
+	require.NotNil(t, repo.upsertedClient)
+	assert.Equal(t, `["https://app.example.com:443/done"]`, repo.upsertedClient.PostLogoutRedirectURIs)
 }
 
 func TestOIDCService_ResolveLogoutClient_FromClientID(t *testing.T) {

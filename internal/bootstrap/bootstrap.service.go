@@ -11,8 +11,12 @@ import (
 	"github.com/ricardoalcantara/min-idp/internal/keystore"
 	keystore_entities "github.com/ricardoalcantara/min-idp/internal/keystore/entities"
 	"github.com/ricardoalcantara/min-idp/internal/rbac"
+	"github.com/ricardoalcantara/min-idp/internal/sp"
+	sp_dto "github.com/ricardoalcantara/min-idp/internal/sp/dto"
 	"github.com/ricardoalcantara/min-idp/internal/users"
 )
+
+const defaultSPSlug = "default"
 
 type BootstrapRepository interface {
 	IsInitialized(ctx context.Context) (bool, error)
@@ -24,6 +28,8 @@ type BootstrapService struct {
 	ks            keystore.KeyStore
 	rbacSvc       *rbac.RBACService
 	usersSvc      *users.UserService
+	spSvc         *sp.SPService
+	cfg           *config.Config
 	adminPassword string
 	log           *slog.Logger
 }
@@ -33,6 +39,7 @@ func NewBootstrapService(
 	ks keystore.KeyStore,
 	rbacSvc *rbac.RBACService,
 	usersSvc *users.UserService,
+	spSvc *sp.SPService,
 	cfg *config.Config,
 	log *slog.Logger,
 ) (*BootstrapService, error) {
@@ -44,6 +51,8 @@ func NewBootstrapService(
 		ks:            ks,
 		rbacSvc:       rbacSvc,
 		usersSvc:      usersSvc,
+		spSvc:         spSvc,
+		cfg:           cfg,
 		adminPassword: cfg.AdminPassword,
 		log:           log,
 	}, nil
@@ -99,15 +108,69 @@ func (s *BootstrapService) Run(ctx context.Context) error {
 		}
 	}
 
+	clientID, clientSecret, err := s.createDefaultSP()
+	if err != nil {
+		return err
+	}
+
 	if err := s.repo.SetInitialized(ctx); err != nil {
 		return fmt.Errorf("bootstrap: save state: %w", err)
 	}
 
-	s.log.Info("bootstrap complete — change the admin password immediately",
+	logArgs := []any{
 		"email", adminEmail,
 		"password", password,
-	)
+		"sp_slug", defaultSPSlug,
+		"client_id", clientID,
+	}
+	if s.cfg.BootstrapSPPublic {
+		logArgs = append(logArgs, "client_type", "public (PKCE, no secret)")
+	} else {
+		logArgs = append(logArgs, "client_secret", clientSecret)
+	}
+	s.log.Info("bootstrap complete — change the admin password immediately", logArgs...)
 
 	return nil
 }
 
+func (s *BootstrapService) createDefaultSP() (clientID, clientSecret string, err error) {
+	spEntity, err := s.spSvc.Create(defaultSPSlug, s.cfg.BootstrapSPName, "oidc")
+	if err != nil {
+		return "", "", fmt.Errorf("bootstrap: create default sp: %w", err)
+	}
+
+	clientID = s.cfg.BootstrapSPClientID
+	if clientID == "" {
+		clientID = defaultSPSlug
+	}
+
+	redirectURIs := s.cfg.BootstrapSPRedirectURIs
+	if len(redirectURIs) == 0 {
+		redirectURIs = []string{"http://localhost:3000/callback"}
+	}
+
+	input := sp_dto.UpsertOIDCClientDto{
+		ClientID:               clientID,
+		RedirectURIs:           redirectURIs,
+		PostLogoutRedirectURIs: []string{},
+	}
+
+	if s.cfg.BootstrapSPPublic {
+		input.TokenEndpointAuth = "none"
+	} else {
+		clientSecret = s.cfg.BootstrapSPClientSecret
+		if clientSecret == "" {
+			clientSecret, err = localcrypto.GenerateSecureToken(32)
+			if err != nil {
+				return "", "", fmt.Errorf("bootstrap: generate client secret: %w", err)
+			}
+		}
+		input.ClientSecret = clientSecret
+	}
+
+	if _, err = s.spSvc.UpsertOIDCClient(spEntity, input); err != nil {
+		return "", "", fmt.Errorf("bootstrap: upsert oidc client: %w", err)
+	}
+
+	return clientID, clientSecret, nil
+}

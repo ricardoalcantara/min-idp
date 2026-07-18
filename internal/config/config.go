@@ -26,6 +26,18 @@ type Config struct {
 	// Leave empty to generate a random password (recommended for production).
 	AdminPassword string `env:"MIN_IDP_ADMIN_PASSWORD"`
 
+	// Bootstrap SP (OIDC) — created once on a fresh database.
+	BootstrapSPName         string   `env:"MIN_IDP_BOOTSTRAP_SP_NAME"          envDefault:"Default App"`
+	BootstrapSPRedirectURIs []string `env:"MIN_IDP_BOOTSTRAP_SP_REDIRECT_URIS" envDefault:"http://localhost:3000/callback" envSeparator:","`
+	BootstrapSPClientID     string   `env:"MIN_IDP_BOOTSTRAP_SP_CLIENT_ID"`
+	// BootstrapSPClientSecret pins the initial OIDC client secret.
+	// Leave empty to generate a random secret (recommended for production).
+	// Ignored when BootstrapSPPublic is true.
+	BootstrapSPClientSecret string `env:"MIN_IDP_BOOTSTRAP_SP_CLIENT_SECRET"`
+	// BootstrapSPPublic creates the bootstrap app as a public client
+	// (token_endpoint_auth=none, PKCE required, no secret) — for SPAs.
+	BootstrapSPPublic bool `env:"MIN_IDP_BOOTSTRAP_SP_PUBLIC" envDefault:"false"`
+
 	FeatureAPIRegistration bool `env:"MIN_IDP_FEATURE_API_REGISTRATION" envDefault:"false"`
 	FeatureAPILogin        bool `env:"MIN_IDP_FEATURE_API_LOGIN"        envDefault:"true"`
 

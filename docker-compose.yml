@@ -1,11 +1,13 @@
 services:
   min-idp:
-    image: ghcr.io/ricardoalcantara/min-idp:v0.1.0-alpha
+    build: .
+    image: min-idp:local
     ports:
       - "8081:8081"
     volumes:
       - min-idp-data:/app/data
     environment:
+      MINSTACK_HOST: "0.0.0.0"
       MINSTACK_PORT: 8081
       MINSTACK_LOG_LEVEL: info
       MINSTACK_LOG_FORMAT: json
@@ -14,6 +16,14 @@ services:
       MIN_IDP_DB_DSN: /app/data/min-idp.db
       # Generate with: openssl rand -base64 32
       MIN_IDP_MASTER_KEY: "change-me-generate-with-openssl-rand-base64-32"
+      # Pin for local testing — override in docker-compose.override.yml for real secrets
+      MIN_IDP_ADMIN_PASSWORD: admin
+      MIN_IDP_BOOTSTRAP_SP_NAME: Default App
+      MIN_IDP_BOOTSTRAP_SP_REDIRECT_URIS: http://localhost:3000/callback
+      MIN_IDP_BOOTSTRAP_SP_CLIENT_ID: default
+      MIN_IDP_BOOTSTRAP_SP_CLIENT_SECRET: dev-client-secret-change-me
+      # Set "true" for SPAs: public client with PKCE, no secret
+      MIN_IDP_BOOTSTRAP_SP_PUBLIC: "false"
 
 volumes:
   min-idp-data:
